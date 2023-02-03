@@ -1,27 +1,26 @@
 "use strict";
-/*
-class Order {
-    constructor(
-        public orderID: string,
-        public customerName: string,
-        public customerAddress: string,
-        public items: Item[]) {
-    }
-}
-
-class Pizza {
-    constructor(
-        public name: string,
-        public ingredients: string[]
-    ) {
-
-    }
-}
-
-class Item {
-    constructor(
-        public pizza: Pizza,
-        public price: number){
-    }
-}*/
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AnOrder = exports.AnItem = exports.APizza = void 0;
+class AnOrder {
+    constructor(orderID, customerName, customerAddress, items) {
+        this.orderID = orderID;
+        this.customerName = customerName;
+        this.customerAddress = customerAddress;
+        this.items = items;
+    }
+}
+exports.AnOrder = AnOrder;
+class APizza {
+    constructor(name, ingredients) {
+        this.name = name;
+        this.ingredients = ingredients;
+    }
+}
+exports.APizza = APizza;
+class AnItem {
+    constructor(pizza, price) {
+        this.pizza = pizza;
+        this.price = price;
+    }
+}
+exports.AnItem = AnItem;

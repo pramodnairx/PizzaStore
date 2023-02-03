@@ -39,13 +39,14 @@ exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importStar(require("mongoose"));
+console.log(`Index.ts -> we are being loaded!`);
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 exports.app = app;
 const port = process.env.PORT;
 const pizzaSchema = new mongoose_1.Schema({
-    name: String,
-    ingredients: Array
+    name: { type: String, required: true },
+    ingredients: { type: String, required: true }
 });
 const itemSchema = new mongoose_1.Schema({
     pizza: [pizzaSchema],
@@ -60,13 +61,36 @@ const orderSchema = new mongoose_1.Schema({
 const PizzaModel = mongoose_1.default.model('Pizza', pizzaSchema);
 const ItemModel = mongoose_1.default.model('Item', itemSchema);
 const OrderModel = mongoose_1.default.model('Order', orderSchema);
+try {
+    mongoose_1.default.connect('mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/?retryWrites=true&w=majority');
+    console.log("Connected to Mongo DB");
+    /*
+    app.listen(port, () => {
+        console.log(`Pizza Store server running at http://localhost:${port}`);
+    });
+    */
+}
+catch (error) {
+    console.error(error);
+    process.exit(1);
+}
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
 }));
 app.post('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const newOrder = new OrderModel(Object.assign({}, req.body));
-    yield newOrder.save();
+    const newOrder = new OrderModel(Object.assign({}, JSON.parse(req.body)));
+    newOrder.save((err) => {
+        console.error(err);
+    });
     res.send(`Order received`);
+}));
+app.post('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`Received pizza post as unparsed : ${req.body}`);
+    const newPizza = new PizzaModel(Object.assign({}, JSON.parse(req.body)));
+    newPizza.save((err) => {
+        console.error(err);
+    });
+    res.send(`Pizza received`);
 }));
 //Specific Order ID
 app.route('/order/:oid')
@@ -78,20 +102,22 @@ app.route('/order/:oid')
 }));
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield mongoose_1.default.connect('mongodb://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/test');
+        /*
         app.listen(port, () => {
             console.log(`Pizza Store server running at http://localhost:${port}`);
         });
+        */
     }
     catch (error) {
         console.error(error);
         process.exit(1);
     }
     finally {
-        if (mongoose_1.default.connection) {
-            yield mongoose_1.default.connection.destroy();
+        /*
+        if(mongoose.connection) {
+            await mongoose.connection.destroy();
         }
         console.log('Mongoose DB connection destroyed');
+        */
     }
 });
-start();
