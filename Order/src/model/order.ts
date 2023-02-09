@@ -1,31 +1,3 @@
-
-class AnOrder implements Order {    
-    constructor(
-        public orderID: string, 
-        public customerName: string, 
-        public customerAddress: string, 
-        public items: Item[]) {
-    }
-}
-
-
-class APizza implements Pizza {
-    constructor(
-        public name: string,
-        public ingredients: string
-    ) {
-
-    }
-}
-
-
-class AnItem implements Item {
-    constructor(
-        public pizza: Pizza,
-        public price: number){
-    }
-}
-
 interface Order {    
     orderID: string; 
     customerName: string; 
@@ -43,4 +15,4 @@ interface Item {
     price: number;
 }
 
-export { Order, Pizza, Item, APizza, AnItem, AnOrder }
+export { Order, Pizza, Item }
