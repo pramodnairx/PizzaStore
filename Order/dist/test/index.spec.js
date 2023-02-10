@@ -5,10 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const chai_1 = __importDefault(require("chai"));
 const supertest_1 = __importDefault(require("supertest"));
-const index_1 = require("../index");
+const order_service_1 = require("../order-service");
 //let should = chai.should();
 let expect = chai_1.default.expect;
-//chai.use(chaiHttp);
 let pizzas;
 let items;
 let orders;
@@ -16,9 +15,12 @@ const reset = function () {
     pizzas = [(new class {
             constructor() {
                 this.name = "Margherita";
-                this.ingredients = "Cheese and more cheese";
+                this.ingredients = ["Cheese and more cheese"];
             }
-        }())];
+        }()),
+        //(new class implements Pizza {name = "Meat Feast"; ingredients = "Bacon, Salami, Sausage, Anchovies";}()),
+        //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+    ];
     /*
     items = [new class implements Item {"pizza": pizzas[0];  "price": 20.50},
                             new class implements Item {"pizza": pizzas[1];  "price": 11.80},
@@ -46,47 +48,58 @@ describe('teardown', () => {
     });
 });
 */
+/*
 describe('/GET', () => {
     it('it should GET a welcome page response', (done) => {
         reset();
-        (0, supertest_1.default)(index_1.app)
+        request(app)
             .get('/')
             .expect(200)
             .then(res => {
-            expect(res.text).to.contain("Welcome");
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                expect(res.text).to.contain("Welcome");
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
 });
-describe('Post /Pizza', () => {
-    it('it should POST a new Pizza', (done) => {
+*/
+describe('Put and Get /Pizza', () => {
+    it('it should PUT a new Pizza', (done) => {
         reset();
-        (0, supertest_1.default)(index_1.app)
-            .post('/pizza')
+        (0, supertest_1.default)(order_service_1.app)
+            .put('/pizza')
             .type('json')
             .set('Content-Type', 'application/json')
             .send(pizzas[0])
             .expect(200)
             .then(res => {
+            //console.log(JSON.stringify(res));
             expect(res.body.name).to.equal(pizzas[0].name);
-            //assert(res.body.name, pizzas[0].name);
+            done();
+        }).catch(err => {
+            done(err);
+        });
+    });
+    it('it should GET pizza details as per provided name', (done) => {
+        reset();
+        (0, supertest_1.default)(order_service_1.app)
+            .get(`/pizza/${pizzas[0].name}`)
+            .type('json')
+            .set('Content-Type', 'application/json')
+            .expect(200)
+            .then(res => {
+            //console.log(JSON.stringify(res));
+            let json = JSON.parse(res.text);
+            //console.log(json);
+            expect(json[0].ingredients).to.contain("Cheese and more cheese");
             done();
         }).catch(err => {
             done(err);
         });
     });
 });
-let objectToString = function (obj) {
-    let output = "{ ";
-    /*
-    for(let key of Object.keys(obj)) {
-        output.concat(`[` + key +  `] = `).concat((obj as any)[key].toString()).concat(`; `);
-    }*/
-    const keys = Object.keys(obj);
-    keys.forEach((key, index) => {
-        output.concat(`[` + key + `] = `).concat(obj[key].toString()).concat(`; `);
-    });
-    return output.concat(" }");
-};
+/*
+describe('Get /Pizza/:name', () => {
+});
+*/

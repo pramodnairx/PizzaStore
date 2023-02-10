@@ -7,7 +7,7 @@ class PizzaStoreModel {
 
     private pizzaSchema = new Schema<Pizza>({
         name: {type: String, required: true},
-        ingredients: {type: String, required: true}
+        ingredients: {type: [String], required: true}
     });
     
     private itemSchema = new Schema<Item>({

@@ -7,7 +7,7 @@ interface Order {
 
 interface Pizza {
     name: string;
-    ingredients: string;
+    ingredients: string[];
 }
 
 interface Item {

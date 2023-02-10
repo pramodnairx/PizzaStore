@@ -2,12 +2,11 @@ import express from 'express';
 import chai from 'chai';
 import assert from 'assert';
 import request from 'supertest';
-import { app } from '../index';
+import { app } from '../order-service';
 import { Order, Pizza, Item } from '../model/order';
 
 //let should = chai.should();
 let expect = chai.expect;
-//chai.use(chaiHttp);
 
 
 let pizzas: Pizza[];
@@ -15,9 +14,10 @@ let items: Item[];
 let orders: Order[];
 
 const reset = function() {
-    pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = "Cheese and more cheese";}()),
-                (new class implements Pizza {name = "Meat Feast"; ingredients = "Bacon, Salami, Sausage, Anchovies";}()),
-                (new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())];
+    pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = ["Cheese and more cheese"];}()),
+                //(new class implements Pizza {name = "Meat Feast"; ingredients = "Bacon, Salami, Sausage, Anchovies";}()),
+                //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+            ];
     /*
     items = [new class implements Item {"pizza": pizzas[0];  "price": 20.50},
                             new class implements Item {"pizza": pizzas[1];  "price": 11.80},
@@ -48,6 +48,7 @@ describe('teardown', () => {
 });
 */
 
+/*
 describe('/GET', () => {
     it('it should GET a welcome page response', (done) => {
         reset();
@@ -62,36 +63,49 @@ describe('/GET', () => {
             })    
     });
 });
+*/
 
-describe('Post /Pizza', () => {
-    it('it should POST a new Pizza', (done) => {
+describe('Put and Get /Pizza', () => {
+
+    it('it should PUT a new Pizza', (done) => {
         reset();
         request(app)
-            .post('/pizza')
+            .put('/pizza')
             .type('json')
             .set('Content-Type','application/json')
             .send(pizzas[0])
             .expect(200)
             .then(res => {
+                //console.log(JSON.stringify(res));
                 expect(res.body.name).to.equal(pizzas[0].name);
-                //assert(res.body.name, pizzas[0].name);
                 done();
             }).catch(err => {
                 done(err);
             })
     });
+
+    
+    it('it should GET pizza details as per provided name', (done) => {
+        reset();
+        request(app)
+            .get(`/pizza/${pizzas[0].name}`)
+            .type('json')
+            .set('Content-Type','application/json')
+            .expect(200)
+            .then(res => {
+                //console.log(JSON.stringify(res));
+                let json = JSON.parse(res.text);
+                //console.log(json);
+                expect(json[0].ingredients).to.contain("Cheese and more cheese");
+                done();
+            }).catch(err => {
+                done(err);
+            })
+    });
+
 });
 
-let objectToString = function(obj:Object): string {
-    let output = "{ ";
-    /*
-    for(let key of Object.keys(obj)) {
-        output.concat(`[` + key +  `] = `).concat((obj as any)[key].toString()).concat(`; `);
-    }*/
-
-    const keys = Object.keys(obj);
-    keys.forEach((key, index) => {
-        output.concat(`[` + key +  `] = `).concat((obj as any)[key].toString()).concat(`; `);
-    });
-    return output.concat(" }");
-}
+/*
+describe('Get /Pizza/:name', () => {
+});
+*/

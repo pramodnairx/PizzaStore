@@ -27,36 +27,55 @@ app.use(express_1.default.urlencoded({ extended: true }));
 function checkDB() {
     return __awaiter(this, void 0, void 0, function* () {
         if (!storeDBModel) {
-            console.log(`Creating new Pizza Store DB Model`);
+            //console.log(`Creating new Pizza Store DB Model`);
             storeDBModel = new PizzaStoreDBModel_1.PizzaStoreModel();
             yield storeDBModel.setup();
         }
     });
 }
+function savePizza(req) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const newPizza = new (storeDBModel.getPizzaModel())(Object.assign({}, req.body));
+        return newPizza.save();
+    });
+}
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
     res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
 }));
-app.post('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/pizza/:name', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkDB();
+    let pizza = yield storeDBModel.getPizzaModel().find({ "name": req.params.name });
+    if (pizza.length > 0) {
+        res.set('Content-Type', 'application/json').json(pizza);
+    }
+    else {
+        console.log(`Unable to find pizza with name ${req.params.name}`);
+        res.sendStatus(404);
+    }
+}));
+app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield checkDB();
     console.log(req.headers);
     if (!req.body) {
-        res.status(400).send();
+        res.sendStatus(400);
     }
     else {
-        console.log(`Request body received as ${req.body}`);
-        const newPizza = new (storeDBModel.getPizzaModel())(Object.assign({}, req.body));
-        newPizza.save((err, pizza) => {
-            if (err) {
-                console.log(`newPizza save errored`);
-                console.error(err);
-                res.status(500).json({ "error": err.message });
+        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        try {
+            if ((yield storeDBModel.getPizzaModel().find({ name: req.body.name })).length > 0) {
+                //console.log(`Found some pizzas to delete first`);
+                let deletedPizzas = (yield storeDBModel.getPizzaModel().deleteMany({ name: req.body.name })).deletedCount;
+                //console.log(`Successfully deleted ${deletedPizzas} pizza(s). Trying to save a new pizza now...`);
             }
-            else {
-                console.log(`newPizza save successful - ${pizza}`);
-                res.send(pizza);
-            }
-        });
+            let pizza = yield savePizza(req);
+            //console.log(`save pizza result = ${JSON.stringify(pizza)}`);
+            res.json(pizza);
+        }
+        catch (err) {
+            console.log(`Error processing a /put pizza request...`);
+            console.error(err);
+            res.status(500).json({ "error": err });
+        }
     }
 }));
 //Specific Order ID
@@ -69,6 +88,5 @@ app.route('/order/:oid')
 }));
 let listener = app.listen(() => {
     console.log();
-    console.log(`Request to start Pizza store app received... [${JSON.stringify(listener.address())}]`);
     console.log(`Request to start Pizza store app received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
 });

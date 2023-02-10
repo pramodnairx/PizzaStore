@@ -39,7 +39,7 @@ class PizzaStoreModel {
         this.connected = false;
         this.pizzaSchema = new mongoose_1.Schema({
             name: { type: String, required: true },
-            ingredients: { type: String, required: true }
+            ingredients: { type: [String], required: true }
         });
         this.itemSchema = new mongoose_1.Schema({
             pizza: [this.pizzaSchema],
