@@ -42,7 +42,7 @@ class PizzaStoreModel {
             ingredients: { type: [String], required: true }
         });
         this.itemSchema = new mongoose_1.Schema({
-            pizza: [this.pizzaSchema],
+            pizza: this.pizzaSchema,
             price: Number
         });
         this.orderSchema = new mongoose_1.Schema({

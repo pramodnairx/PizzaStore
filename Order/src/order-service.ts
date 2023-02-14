@@ -65,6 +65,43 @@ app.put('/pizza', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/item/:pizza', async(req: Request, res: Response) => {
+    await checkDB();
+    let item = await storeDBModel.getItemModel().findOne({name: req.params.pizza});
+    if( item /*&& item.length > 0*/) {
+        res.set('Content-Type','application/json').json(item);
+    } else {
+        console.log(`Unable to find item with name ${req.params.pizza}`);
+        res.sendStatus(404);
+    }
+});
+
+app.put('/item', async (req: Request, res: Response) => {
+    await checkDB();
+    console.log(req.headers);
+    if(!req.body) {
+        res.sendStatus(400);
+    } else {
+        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        try {
+            if( (await storeDBModel.getItemModel().find({name: req.body.pizza.name})).length > 0){
+                console.log(`Found some items to delete first`);
+                let deletedItems = (await storeDBModel.getItemModel().deleteMany({name: req.body.pizza.name})).deletedCount;
+                console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
+            }
+            const newItem = new (storeDBModel.getItemModel())({...req.body});
+            const item = await newItem.save();      
+            //console.log(`save pizza result = ${JSON.stringify(item)}`);
+            res.json(item);
+        } catch (err) {
+            console.log(`Error processing a /put item request...`);
+            console.error(err);
+            res.status(500).json({"error": err});
+        }
+    }
+});
+
+
 
 
 //Specific Order ID

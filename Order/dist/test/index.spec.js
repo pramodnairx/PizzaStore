@@ -18,16 +18,28 @@ const reset = function () {
                 this.ingredients = ["Cheese and more cheese"];
             }
         }()),
-        //(new class implements Pizza {name = "Meat Feast"; ingredients = "Bacon, Salami, Sausage, Anchovies";}()),
+        (new class {
+            constructor() {
+                this.name = "Meat Feast";
+                this.ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"];
+            }
+        }()),
         //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
     ];
+    items = [(new class {
+            constructor() {
+                this.pizza = pizzas[0];
+                this.price = 18.95;
+            }
+        }()),
+        (new class {
+            constructor() {
+                this.pizza = pizzas[1];
+                this.price = 22.10;
+            }
+        }())
+    ];
     /*
-    items = [new class implements Item {"pizza": pizzas[0];  "price": 20.50},
-                            new class implements Item {"pizza": pizzas[1];  "price": 11.80},
-                            new class implements Item {"pizza": pizzas[2];  "price": 24.10},
-                            new class implements Item {"pizza": pizzas[3];  "price": 33},];
-    
-    
     orders = [new AnOrder('1234', 'Joe Hungry', '78 Eatville St.', [items[0], items[1]]),
                             new AnOrder('3456', 'Adam Yummy', '32 Pizzalovers Cl.', [items[2], items[3]]),
                             new AnOrder('5678', 'Lisa Lousy', '8 Hungergames Dr.', [items[1], items[2]]),
@@ -64,27 +76,67 @@ describe('/GET', () => {
     });
 });
 */
+/*
 describe('Put and Get /Pizza', () => {
+
     it('it should PUT a new Pizza', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .put('/pizza')
             .type('json')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type','application/json')
             .send(pizzas[0])
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
-            expect(res.body.name).to.equal(pizzas[0].name);
+                //console.log(JSON.stringify(res));
+                expect(res.body.name).to.equal(pizzas[0].name);
+                done();
+            }).catch(err => {
+                done(err);
+            })
+    });
+
+    
+    it('it should GET pizza details as per provided name', (done) => {
+        reset();
+        request(app)
+            .get(`/pizza/${pizzas[0].name}`)
+            .type('json')
+            .set('Content-Type','application/json')
+            .expect(200)
+            .then(res => {
+                //console.log(JSON.stringify(res));
+                let json = JSON.parse(res.text);
+                //console.log(json);
+                expect(json[0].ingredients).to.contain("Cheese and more cheese");
+                done();
+            }).catch(err => {
+                done(err);
+            })
+    });
+});
+*/
+describe('Put and Get /Item', () => {
+    it('it should PUT a new Item', (done) => {
+        reset();
+        (0, supertest_1.default)(order_service_1.app)
+            .put('/item')
+            .type('json')
+            .set('Content-Type', 'application/json')
+            .send(items[0])
+            .expect(200)
+            .then(res => {
+            console.log(JSON.stringify(res));
+            expect(res.body.pizza.name).to.equal(items[0].pizza.name);
             done();
         }).catch(err => {
             done(err);
         });
     });
-    it('it should GET pizza details as per provided name', (done) => {
+    it('it should GET item details as per provided Pizza name', (done) => {
         reset();
         (0, supertest_1.default)(order_service_1.app)
-            .get(`/pizza/${pizzas[0].name}`)
+            .get(`/item/${items[0].pizza.name}`)
             .type('json')
             .set('Content-Type', 'application/json')
             .expect(200)
@@ -92,14 +144,10 @@ describe('Put and Get /Pizza', () => {
             //console.log(JSON.stringify(res));
             let json = JSON.parse(res.text);
             //console.log(json);
-            expect(json[0].ingredients).to.contain("Cheese and more cheese");
+            expect(json.price).to.equal(items[0].price);
             done();
         }).catch(err => {
             done(err);
         });
     });
 });
-/*
-describe('Get /Pizza/:name', () => {
-});
-*/

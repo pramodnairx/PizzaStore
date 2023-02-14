@@ -11,7 +11,7 @@ class PizzaStoreModel {
     });
     
     private itemSchema = new Schema<Item>({
-        pizza: [this.pizzaSchema],
+        pizza: this.pizzaSchema,
         price: Number
     });
     

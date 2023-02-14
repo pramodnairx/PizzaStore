@@ -78,6 +78,43 @@ app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
 }));
+app.get('/item/:pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkDB();
+    let item = yield storeDBModel.getItemModel().findOne({ name: req.params.pizza });
+    if (item /*&& item.length > 0*/) {
+        res.set('Content-Type', 'application/json').json(item);
+    }
+    else {
+        console.log(`Unable to find item with name ${req.params.pizza}`);
+        res.sendStatus(404);
+    }
+}));
+app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkDB();
+    console.log(req.headers);
+    if (!req.body) {
+        res.sendStatus(400);
+    }
+    else {
+        console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        try {
+            if ((yield storeDBModel.getItemModel().find({ name: req.body.pizza.name })).length > 0) {
+                console.log(`Found some items to delete first`);
+                let deletedItems = (yield storeDBModel.getItemModel().deleteMany({ name: req.body.pizza.name })).deletedCount;
+                console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
+            }
+            const newItem = new (storeDBModel.getItemModel())(Object.assign({}, req.body));
+            const item = yield newItem.save();
+            console.log(`save pizza result = ${JSON.stringify(item)}`);
+            res.json(item);
+        }
+        catch (err) {
+            console.log(`Error processing a /put item request...`);
+            console.error(err);
+            res.status(500).json({ "error": err });
+        }
+    }
+}));
 //Specific Order ID
 app.route('/order/:oid')
     .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
