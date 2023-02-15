@@ -96,7 +96,7 @@ app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.sendStatus(400);
     }
     else {
-        console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
             if ((yield storeDBModel.getItemModel().find({ name: req.body.pizza.name })).length > 0) {
                 console.log(`Found some items to delete first`);
@@ -105,7 +105,7 @@ app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             }
             const newItem = new (storeDBModel.getItemModel())(Object.assign({}, req.body));
             const item = yield newItem.save();
-            console.log(`save pizza result = ${JSON.stringify(item)}`);
+            //console.log(`save pizza result = ${JSON.stringify(item)}`);
             res.json(item);
         }
         catch (err) {

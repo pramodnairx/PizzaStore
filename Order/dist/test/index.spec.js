@@ -60,62 +60,55 @@ describe('teardown', () => {
     });
 });
 */
-/*
 describe('/GET', () => {
     it('it should GET a welcome page response', (done) => {
         reset();
-        request(app)
+        (0, supertest_1.default)(order_service_1.app)
             .get('/')
             .expect(200)
             .then(res => {
-                expect(res.text).to.contain("Welcome");
-                done();
-            }).catch(err => {
-                done(err);
-            })
+            expect(res.text).to.contain("Welcome");
+            done();
+        }).catch(err => {
+            done(err);
+        });
     });
 });
-*/
-/*
 describe('Put and Get /Pizza', () => {
-
     it('it should PUT a new Pizza', (done) => {
         reset();
-        request(app)
+        (0, supertest_1.default)(order_service_1.app)
             .put('/pizza')
             .type('json')
-            .set('Content-Type','application/json')
+            .set('Content-Type', 'application/json')
             .send(pizzas[0])
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                expect(res.body.name).to.equal(pizzas[0].name);
-                done();
-            }).catch(err => {
-                done(err);
-            })
+            //console.log(JSON.stringify(res));
+            expect(res.body.name).to.equal(pizzas[0].name);
+            done();
+        }).catch(err => {
+            done(err);
+        });
     });
-
-    
     it('it should GET pizza details as per provided name', (done) => {
         reset();
-        request(app)
+        (0, supertest_1.default)(order_service_1.app)
             .get(`/pizza/${pizzas[0].name}`)
             .type('json')
-            .set('Content-Type','application/json')
+            .set('Content-Type', 'application/json')
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                let json = JSON.parse(res.text);
-                //console.log(json);
-                expect(json[0].ingredients).to.contain("Cheese and more cheese");
-                done();
-            }).catch(err => {
-                done(err);
-            })
+            //console.log(JSON.stringify(res));
+            let json = JSON.parse(res.text);
+            //console.log(json);
+            expect(json[0].ingredients).to.contain("Cheese and more cheese");
+            done();
+        }).catch(err => {
+            done(err);
+        });
     });
 });
-*/
 describe('Put and Get /Item', () => {
     it('it should PUT a new Item', (done) => {
         reset();

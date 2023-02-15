@@ -47,7 +47,6 @@ describe('teardown', () => {
 });
 */
 
-/*
 describe('/GET', () => {
     it('it should GET a welcome page response', (done) => {
         reset();
@@ -62,7 +61,7 @@ describe('/GET', () => {
             })    
     });
 });
-*/
+
 
 describe('Put and Get /Pizza', () => {
 
