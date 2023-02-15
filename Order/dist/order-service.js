@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 const util_1 = __importDefault(require("util"));
 const express_1 = __importDefault(require("express"));
+const express_oauth2_jwt_bearer_1 = require("express-oauth2-jwt-bearer");
 const dotenv_1 = __importDefault(require("dotenv"));
 const PizzaStoreDBModel_1 = require("./db/PizzaStoreDBModel");
 let storeDBModel;
@@ -24,6 +25,12 @@ exports.app = app;
 const port = process.env.PORT;
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+const jwtCheck = (0, express_oauth2_jwt_bearer_1.auth)({
+    audience: 'https://pizzaorderservice.pramodnairx',
+    issuerBaseURL: 'https://dev-wmzvd34fb17s8ovr.us.auth0.com/',
+    tokenSigningAlg: 'RS256'
+});
+app.use(jwtCheck);
 function checkDB() {
     return __awaiter(this, void 0, void 0, function* () {
         if (!storeDBModel) {
@@ -39,6 +46,9 @@ function savePizza(req) {
         return newPizza.save();
     });
 }
+app.get('/auth', (req, res) => {
+    res.send(`Secured Resource`);
+});
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
 }));
@@ -55,7 +65,7 @@ app.get('/pizza/:name', (req, res) => __awaiter(void 0, void 0, void 0, function
 }));
 app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield checkDB();
-    console.log(req.headers);
+    //console.log(req.headers);
     if (!req.body) {
         res.sendStatus(400);
     }
@@ -91,7 +101,7 @@ app.get('/item/:pizza', (req, res) => __awaiter(void 0, void 0, void 0, function
 }));
 app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield checkDB();
-    console.log(req.headers);
+    //console.log(req.headers);
     if (!req.body) {
         res.sendStatus(400);
     }
@@ -115,13 +125,42 @@ app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
 }));
-//Specific Order ID
-app.route('/order/:oid')
-    .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send(`Retrieving Order details for Order ID ${req.params.oid}`);
-}))
-    .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send(`Deleting Order ID ${req.params.oid}`);
+app.get('/order/:orderID', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkDB();
+    let order = yield storeDBModel.getOrderModel().find({ orderID: req.params.orderID });
+    if (order.length > 0) {
+        res.set('Content-Type', 'application/json').json(order);
+    }
+    else {
+        console.log(`Unable to find Order with ID ${req.params.orderID}`);
+        res.sendStatus(404);
+    }
+}));
+app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkDB();
+    //console.log(req.headers);
+    if (!req.body) {
+        res.sendStatus(400);
+    }
+    else {
+        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        try {
+            if ((yield storeDBModel.getOrderModel().find({ orderID: req.body.orderID })).length > 0) {
+                console.log(`Found some orders to delete first`);
+                let deletedItems = (yield storeDBModel.getOrderModel().deleteMany({ orderID: req.body.orderID })).deletedCount;
+                console.log(`Successfully deleted ${deletedItems} order(s). Trying to save a new order now...`);
+            }
+            const newOrder = new (storeDBModel.getOrderModel())(Object.assign({}, req.body));
+            const order = yield newOrder.save();
+            //console.log(`save order result = ${JSON.stringify(order)}`);
+            res.json(order);
+        }
+        catch (err) {
+            console.log(`Error processing a /put Order request...`);
+            console.error(err);
+            res.status(500).json({ "error": err });
+        }
+    }
 }));
 let listener = app.listen(() => {
     console.log();

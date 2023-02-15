@@ -1,8 +1,8 @@
 import util from 'util';
 import express, { Express, Request, Response } from 'express';
+import { auth } from 'express-oauth2-jwt-bearer';
 import dotenv from 'dotenv';
 import { PizzaStoreModel } from './db/PizzaStoreDBModel';
-import { Pizza } from './model/order';
 
 let storeDBModel: PizzaStoreModel;
 
@@ -12,6 +12,13 @@ const app: Express = express();
 const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const jwtCheck = auth({
+    audience: 'https://pizzaorderservice.pramodnairx',
+    issuerBaseURL: 'https://dev-wmzvd34fb17s8ovr.us.auth0.com/',
+    tokenSigningAlg: 'RS256'
+  });
+app.use(jwtCheck);
 
 async function checkDB(){
     if(!storeDBModel) {
@@ -25,6 +32,10 @@ async function savePizza(req: Request) {
     const newPizza = new (storeDBModel.getPizzaModel())({...req.body});
     return newPizza.save();      
 }
+
+app.get('/auth', (req: Request, res: Response) => {
+    res.send(`Secured Resource`);
+});
 
 app.get('/', async (req: Request, res: Response) => {
     res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
@@ -43,7 +54,7 @@ app.get('/pizza/:name', async(req: Request, res: Response) => {
 
 app.put('/pizza', async (req: Request, res: Response) => {
     await checkDB();
-    console.log(req.headers);
+    //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
     } else {
@@ -78,7 +89,7 @@ app.get('/item/:pizza', async(req: Request, res: Response) => {
 
 app.put('/item', async (req: Request, res: Response) => {
     await checkDB();
-    console.log(req.headers);
+    //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
     } else {
@@ -101,17 +112,42 @@ app.put('/item', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/order/:orderID', async(req: Request, res: Response) => {
+    await checkDB();
+    let order = await storeDBModel.getOrderModel().find({orderID: req.params.orderID});
+    if( order.length > 0) {
+        res.set('Content-Type','application/json').json(order);
+    } else {
+        console.log(`Unable to find Order with ID ${req.params.orderID}`);
+        res.sendStatus(404);
+    }
+});
 
+app.put('/order', async (req: Request, res: Response) => {
+    await checkDB();
+    //console.log(req.headers);
+    if(!req.body) {
+        res.sendStatus(400);
+    } else {
+        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
+        try {
+            if( (await storeDBModel.getOrderModel().find({orderID: req.body.orderID})).length > 0){
+                console.log(`Found some orders to delete first`);
+                let deletedItems = (await storeDBModel.getOrderModel().deleteMany({orderID: req.body.orderID})).deletedCount;
+                console.log(`Successfully deleted ${deletedItems} order(s). Trying to save a new order now...`);
+            }
+            const newOrder = new (storeDBModel.getOrderModel())({...req.body});
+            const order = await newOrder.save();      
+            //console.log(`save order result = ${JSON.stringify(order)}`);
+            res.json(order);
+        } catch (err) {
+            console.log(`Error processing a /put Order request...`);
+            console.error(err);
+            res.status(500).json({"error": err});
+        }
+    }
+});
 
-
-//Specific Order ID
-app.route('/order/:oid')
-    .get(async (req: Request, res: Response) => {
-        res.send(`Retrieving Order details for Order ID ${req.params.oid}`);
-    })
-    .delete(async (req: Request, res: Response) => {
-        res.send(`Deleting Order ID ${req.params.oid}`);
-    });
 
 let listener = app.listen(() => {
     console.log();
