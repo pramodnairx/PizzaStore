@@ -7,7 +7,7 @@ import { Order, Pizza, Item } from '../model/order';
 //let should = chai.should();
 let expect = chai.expect;
 
-let auth0Token: string;
+let auth0Token/*: string*/ = "dummy";
 
 let pizzas: Pizza[];
 let items: Item[];

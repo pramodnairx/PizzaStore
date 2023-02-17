@@ -18,7 +18,7 @@ const jwtCheck = auth({
     issuerBaseURL: 'https://dev-wmzvd34fb17s8ovr.us.auth0.com/',
     tokenSigningAlg: 'RS256'
   });
-app.use(jwtCheck);
+//app.use(jwtCheck);
 
 async function checkDB(){
     if(!storeDBModel) {
@@ -41,16 +41,27 @@ app.get('/', async (req: Request, res: Response) => {
     res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
 });
 
-app.get('/pizza/:name', async(req: Request, res: Response) => {
-    await checkDB();
-    let pizza = await storeDBModel.getPizzaModel().find({"name": req.params.name});
-    if( pizza.length > 0) {
-        res.set('Content-Type','application/json').json(pizza);
-    } else {
-        console.log(`Unable to find pizza with name ${req.params.name}`);
-        res.sendStatus(404);
-    }
-});
+app.route('/pizza/:name')
+    .get(async(req: Request, res: Response) => {
+        await checkDB();
+        let pizza = await storeDBModel.getPizzaModel().find({"name": req.params.name});
+        if( pizza.length > 0) {
+            res.set('Content-Type','application/json').json(pizza);
+        } else {
+            console.log(`Unable to find pizza with name ${req.params.name}`);
+            res.sendStatus(404);
+        }
+    })
+    .delete(async(req: Request, res: Response) => {
+        await checkDB();
+        let pizza = await storeDBModel.getPizzaModel().findOneAndDelete({"name": req.params.name});
+        if(pizza) {
+            res.set('Content-Type','application/json').json(pizza);
+        } else {
+            console.log(`Unable to find pizza with name ${req.params.name}`);
+            res.sendStatus(404);
+        }
+    });
 
 app.put('/pizza', async (req: Request, res: Response) => {
     await checkDB();
@@ -76,16 +87,27 @@ app.put('/pizza', async (req: Request, res: Response) => {
     }
 });
 
-app.get('/item/:pizza', async(req: Request, res: Response) => {
-    await checkDB();
-    let item = await storeDBModel.getItemModel().findOne({name: req.params.pizza});
-    if( item /*&& item.length > 0*/) {
-        res.set('Content-Type','application/json').json(item);
-    } else {
-        console.log(`Unable to find item with name ${req.params.pizza}`);
-        res.sendStatus(404);
-    }
-});
+app.route('/item/:pizza')
+    .get(async(req: Request, res: Response) => {
+        await checkDB();
+        let item = await storeDBModel.getItemModel().findOne({name: req.params.pizza});
+        if( item /*&& item.length > 0*/) {
+            res.set('Content-Type','application/json').json(item);
+        } else {
+            console.log(`Unable to find item with name ${req.params.pizza}`);
+            res.sendStatus(404);
+        }
+    })
+    .delete(async(req: Request, res: Response) => {
+        await checkDB();
+        let item = await storeDBModel.getItemModel().findOneAndDelete({name: req.params.pizza});
+        if( item /*&& item.length > 0*/) {
+            res.set('Content-Type','application/json').json(item);
+        } else {
+            console.log(`Unable to find item with name ${req.params.pizza}`);
+            res.sendStatus(404);
+        }
+    });
 
 app.put('/item', async (req: Request, res: Response) => {
     await checkDB();
@@ -112,16 +134,27 @@ app.put('/item', async (req: Request, res: Response) => {
     }
 });
 
-app.get('/order/:orderID', async(req: Request, res: Response) => {
-    await checkDB();
-    let order = await storeDBModel.getOrderModel().find({orderID: req.params.orderID});
-    if( order.length > 0) {
-        res.set('Content-Type','application/json').json(order);
-    } else {
-        console.log(`Unable to find Order with ID ${req.params.orderID}`);
-        res.sendStatus(404);
-    }
-});
+app.route('/order/:orderID')
+    .get(async(req: Request, res: Response) => {
+        await checkDB();
+        let order = await storeDBModel.getOrderModel().find({orderID: req.params.orderID});
+        if( order.length > 0) {
+            res.set('Content-Type','application/json').json(order);
+        } else {
+            console.log(`Unable to find Order with ID ${req.params.orderID}`);
+            res.sendStatus(404);
+        }
+    })
+    .delete(async(req: Request, res: Response) => {
+        await checkDB();
+        let order = await storeDBModel.getOrderModel().findOneAndDelete({orderID: req.params.orderID});
+        if(order) {
+            res.set('Content-Type','application/json').json(order);
+        } else {
+            console.log(`Unable to find Order with ID ${req.params.orderID}`);
+            res.sendStatus(404);
+        }
+    });
 
 app.put('/order', async (req: Request, res: Response) => {
     await checkDB();
@@ -148,6 +181,16 @@ app.put('/order', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/order', async (req: Request, res: Response) => {
+    await checkDB();
+    let order = await storeDBModel.getOrderModel().find();
+    if( order.length > 0) {
+        res.set('Content-Type','application/json').json(order);
+    } else {
+        console.log(`Unable to find any orders`);
+        res.sendStatus(404);
+    }
+});
 
 let listener = app.listen(() => {
     console.log();
