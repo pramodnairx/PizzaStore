@@ -55,6 +55,56 @@ class MongoDBPersistenceManager {
             return deletedPizzas.deletedCount;
         });
     }
+    getItems(pizzaName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.checkDB();
+            let items = yield this._storeDBModel.getItemModel().find({ name: pizzaName });
+            return items;
+        });
+    }
+    saveItems(items) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let savedItems = [];
+            this.checkDB();
+            for (let item of items) {
+                const newItem = new (this._storeDBModel.getItemModel())(item);
+                savedItems.push(yield newItem.save());
+            }
+            return savedItems;
+        });
+    }
+    deleteItems(names) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.checkDB();
+            let deletedItems = yield this._storeDBModel.getItemModel().deleteMany({ "name": { $in: names } });
+            return deletedItems.deletedCount;
+        });
+    }
+    getOrder(orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.checkDB();
+            let order = yield this._storeDBModel.getOrderModel().findOne({ orderID: orderID });
+            return order;
+        });
+    }
+    saveOrders(orders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let savedOrders = [];
+            this.checkDB();
+            for (let order of orders) {
+                const newOrder = new (this._storeDBModel.getOrderModel())(order);
+                savedOrders.push(yield newOrder.save());
+            }
+            return savedOrders;
+        });
+    }
+    deleteOrders(orderIDs) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.checkDB();
+            let deletedOrders = yield this._storeDBModel.getOrderModel().deleteMany({ "orderID": { $in: orderIDs } });
+            return deletedOrders.deletedCount;
+        });
+    }
     checkDB() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this._storeDBModel.setup();

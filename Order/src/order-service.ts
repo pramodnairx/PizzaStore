@@ -78,9 +78,8 @@ app.put('/pizza', async (req: Request, res: Response) => {
 
 app.route('/item/:pizza')
     .get(async(req: Request, res: Response) => {
-        //await checkDB();
-        let item = await storeDBModel.getItemModel().findOne({name: req.params.pizza});
-        if( item /*&& item.length > 0*/) {
+        let item = await persistenceManager.getItems(req.params.pizza);
+        if( item && item.length > 0) {
             res.set('Content-Type','application/json').json(item);
         } else {
             console.log(`Unable to find item with name ${req.params.pizza}`);
@@ -88,10 +87,9 @@ app.route('/item/:pizza')
         }
     })
     .delete(async(req: Request, res: Response) => {
-        //await checkDB();
-        let item = await storeDBModel.getItemModel().findOneAndDelete({name: req.params.pizza});
-        if( item /*&& item.length > 0*/) {
-            res.set('Content-Type','application/json').json(item);
+        let deletedCount = await persistenceManager.deleteItems([req.params.pizza]);
+        if( deletedCount > 0) {
+            res.set('Content-Type','application/json').json(deletedCount);
         } else {
             console.log(`Unable to find item with name ${req.params.pizza}`);
             res.sendStatus(404);
@@ -99,21 +97,16 @@ app.route('/item/:pizza')
     });
 
 app.put('/item', async (req: Request, res: Response) => {
-    //await checkDB();
-    //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
     } else {
-        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
-            if( (await storeDBModel.getItemModel().find({name: req.body.pizza.name})).length > 0){
-                console.log(`Found some items to delete first`);
-                let deletedItems = (await storeDBModel.getItemModel().deleteMany({name: req.body.pizza.name})).deletedCount;
-                console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
+            if( (await persistenceManager.getItems(req.body.pizza.name)).length > 0) {
+                //console.log(`Found some items to delete first`);
+                let deletedItems = (await persistenceManager.deleteItems([req.body.pizza.name]));
+                //console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
             }
-            const newItem = new (storeDBModel.getItemModel())({...req.body});
-            const item = await newItem.save();      
-            //console.log(`save pizza result = ${JSON.stringify(item)}`);
+            const item = await persistenceManager.saveItems([{...req.body}]);
             res.json(item);
         } catch (err) {
             console.log(`Error processing a /put item request...`);
@@ -125,9 +118,8 @@ app.put('/item', async (req: Request, res: Response) => {
 
 app.route('/order/:orderID')
     .get(async(req: Request, res: Response) => {
-        //await checkDB();
-        let order = await storeDBModel.getOrderModel().find({orderID: req.params.orderID});
-        if( order.length > 0) {
+        let order = await persistenceManager.getOrder(req.params.orderID);
+        if(order) {
             res.set('Content-Type','application/json').json(order);
         } else {
             console.log(`Unable to find Order with ID ${req.params.orderID}`);
@@ -135,9 +127,8 @@ app.route('/order/:orderID')
         }
     })
     .delete(async(req: Request, res: Response) => {
-        //await checkDB();
-        let order = await storeDBModel.getOrderModel().findOneAndDelete({orderID: req.params.orderID});
-        if(order) {
+        let order = await persistenceManager.deleteOrders([req.params.orderID]);
+        if(order > 0) {
             res.set('Content-Type','application/json').json(order);
         } else {
             console.log(`Unable to find Order with ID ${req.params.orderID}`);
@@ -146,22 +137,15 @@ app.route('/order/:orderID')
     });
 
 app.put('/order', async (req: Request, res: Response) => {
-    //await checkDB();
-    //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
     } else {
-        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
-            if( (await storeDBModel.getOrderModel().find({orderID: req.body.orderID})).length > 0){
-                console.log(`Found some orders to delete first`);
-                let deletedItems = (await storeDBModel.getOrderModel().deleteMany({orderID: req.body.orderID})).deletedCount;
-                console.log(`Successfully deleted ${deletedItems} order(s). Trying to save a new order now...`);
+            if(await persistenceManager.getOrder(req.body.orderID)){
+                let deletedItems = (await persistenceManager.deleteOrders([req.body.orderID]));
             }
-            const newOrder = new (storeDBModel.getOrderModel())({...req.body});
-            const order = await newOrder.save();      
-            //console.log(`save order result = ${JSON.stringify(order)}`);
-            res.json(order);
+            const orders = await persistenceManager.saveOrders([{...req.body}]);
+            res.json(orders);
         } catch (err) {
             console.log(`Error processing a /put Order request...`);
             console.error(err);

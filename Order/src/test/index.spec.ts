@@ -23,7 +23,7 @@ const reset = function() {
                 (new class implements ItemSpec {pizza = pizzas[1]; price = 22.10}())
             ];
     
-    orders = [(new class implements OrderSpec {orderID = "000001"; customerName = "Hungry Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
+    orders = [(new class implements OrderSpec {orderID = "000002"; customerName = "Hungrier Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
     
 }
 
@@ -80,7 +80,6 @@ describe('/GET', () => {
             })    
     });
 });
-
 
 describe('Put, Get and Delete a /Pizza', () => {
 
@@ -142,8 +141,8 @@ describe('Put, Get and Delete a /Pizza', () => {
 
 });
 
-/*
-describe('Put and Get /Item', () => {
+
+describe('Put, Get and Delete /Item', () => {
 
     before('Setup Auth0', getAuth0Token);
 
@@ -157,8 +156,8 @@ describe('Put and Get /Item', () => {
             .send(items[0])
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                expect(res.body.pizza.name).to.equal(items[0].pizza.name);
+                let json = JSON.parse(res.text);
+                expect(json[0].pizza.name).to.equal(items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);
@@ -174,19 +173,36 @@ describe('Put and Get /Item', () => {
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
                 let json = JSON.parse(res.text);
-                //console.log(json);
-                expect(json.price).to.equal(items[0].price);
+                expect(json[0].price).to.equal(items[0].price);
                 done();
             }).catch(err => {
                 done(err);
             })
     });
+
+    it('it should DELETE Items as per details provided', (done) => {
+        reset();
+        request(app)
+            .delete(`/item/${items[0].pizza.name}`)
+            .type('json')
+            .set('Content-Type','application/json')
+            .set('authorization', `Bearer ${auth0Token}`)
+            .send(items[0])
+            .expect(200)
+            .then(res => {
+                let json = JSON.parse(res.text);
+                expect(json).to.equal(1);
+                done();
+            }).catch(err => {
+                done(err);
+            })
+    });
+
 });
 
 
-describe('Put and Get /Order', () => {
+describe('Put, Get and Delete an /Order', () => {
 
     before('Setup Auth0', getAuth0Token);
     
@@ -200,9 +216,9 @@ describe('Put and Get /Order', () => {
             .send(orders[0])
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                expect(res.body.orderID).to.equal(orders[0].orderID);
-                expect(res.body.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                let json = JSON.parse(res.text);
+                expect(json[0].orderID).to.equal(orders[0].orderID);
+                expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);
@@ -218,19 +234,35 @@ describe('Put and Get /Order', () => {
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                let json = JSON.parse(res.text);
-                //console.log(json);
-                expect(json[0].orderID).to.equal(orders[0].orderID);
-                expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                expect(res.body.orderID).to.equal(orders[0].orderID);
+                expect(res.body.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);
             })
     });
+
+    it('it should DELETE Orders as per details provided', (done) => {
+        reset();
+        request(app)
+            .delete(`/order/${orders[0].orderID}`)
+            .type('json')
+            .set('Content-Type','application/json')
+            .set('authorization', `Bearer ${auth0Token}`)
+            //.send(orders[0])
+            .expect(200)
+            .then(res => {
+                let json = JSON.parse(res.text);
+                expect(json).to.equal(1);
+                done();
+            }).catch(err => {
+                done(err);
+            })
+    });
+
 });
 
-
+/*
 describe('GET /auth ', () => {
     
     before('Setup Auth0', getAuth0Token);
@@ -250,3 +282,4 @@ describe('GET /auth ', () => {
     });
 });
 */
+

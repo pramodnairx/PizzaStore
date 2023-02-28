@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 const util_1 = __importDefault(require("util"));
 const express_1 = __importDefault(require("express"));
-const express_oauth2_jwt_bearer_1 = require("express-oauth2-jwt-bearer");
 const dotenv_1 = __importDefault(require("dotenv"));
 const persistencemanager_1 = require("./db/persistencemanager");
 let storeDBModel;
@@ -25,12 +24,15 @@ exports.app = app;
 const port = process.env.PORT;
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-const jwtCheck = (0, express_oauth2_jwt_bearer_1.auth)({
+/*
+const jwtCheck = auth({
     audience: 'https://pizzaorderservice.pramodnairx',
     issuerBaseURL: 'https://dev-wmzvd34fb17s8ovr.us.auth0.com/',
     tokenSigningAlg: 'RS256'
-});
-//app.use(jwtCheck);
+  });
+app.use(jwtCheck);
+*/
+const persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB);
 function savePizza(req) {
     return __awaiter(this, void 0, void 0, function* () {
         const newPizza = new (storeDBModel.getPizzaModel())(Object.assign({}, req.body));
@@ -45,7 +47,7 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 app.route('/pizza/:name')
     .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let pizza = yield persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB).getPizzas(req.params.name);
+    let pizza = yield persistenceManager.getPizzas(req.params.name);
     if (pizza.length > 0) {
         res.set('Content-Type', 'application/json').json(pizza);
     }
@@ -55,7 +57,7 @@ app.route('/pizza/:name')
     }
 }))
     .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let deletedPizzas = yield persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB).deletePizzas([req.params.name]);
+    let deletedPizzas = yield persistenceManager.deletePizzas([req.params.name]);
     if (deletedPizzas > 0) {
         res.set('Content-Type', 'application/json').json(deletedPizzas);
     }
@@ -70,10 +72,10 @@ app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     else {
         try {
-            if ((yield persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB).getPizzas(req.body.name)).length > 0) {
-                let deletedPizzas = yield persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB).deletePizzas([req.params.name]);
+            if ((yield persistenceManager.getPizzas(req.body.name)).length > 0) {
+                let deletedPizzas = yield persistenceManager.deletePizzas([req.params.name]);
             }
-            let pizza = yield persistencemanager_1.PersistenceManagerFactory.getPersistenceManager(persistencemanager_1.PersistenceManagerFactory.MONGO_DB).savePizzas([Object.assign({}, req.body)]);
+            let pizza = yield persistenceManager.savePizzas([Object.assign({}, req.body)]);
             res.json(pizza);
         }
         catch (err) {
@@ -85,9 +87,8 @@ app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 app.route('/item/:pizza')
     .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    let item = yield storeDBModel.getItemModel().findOne({ name: req.params.pizza });
-    if (item /*&& item.length > 0*/) {
+    let item = yield persistenceManager.getItems(req.params.pizza);
+    if (item && item.length > 0) {
         res.set('Content-Type', 'application/json').json(item);
     }
     else {
@@ -96,10 +97,9 @@ app.route('/item/:pizza')
     }
 }))
     .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    let item = yield storeDBModel.getItemModel().findOneAndDelete({ name: req.params.pizza });
-    if (item /*&& item.length > 0*/) {
-        res.set('Content-Type', 'application/json').json(item);
+    let deletedCount = yield persistenceManager.deleteItems([req.params.pizza]);
+    if (deletedCount > 0) {
+        res.set('Content-Type', 'application/json').json(deletedCount);
     }
     else {
         console.log(`Unable to find item with name ${req.params.pizza}`);
@@ -107,22 +107,17 @@ app.route('/item/:pizza')
     }
 }));
 app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    //console.log(req.headers);
     if (!req.body) {
         res.sendStatus(400);
     }
     else {
-        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
-            if ((yield storeDBModel.getItemModel().find({ name: req.body.pizza.name })).length > 0) {
-                console.log(`Found some items to delete first`);
-                let deletedItems = (yield storeDBModel.getItemModel().deleteMany({ name: req.body.pizza.name })).deletedCount;
-                console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
+            if ((yield persistenceManager.getItems(req.body.pizza.name)).length > 0) {
+                //console.log(`Found some items to delete first`);
+                let deletedItems = (yield persistenceManager.deleteItems([req.body.pizza.name]));
+                //console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
             }
-            const newItem = new (storeDBModel.getItemModel())(Object.assign({}, req.body));
-            const item = yield newItem.save();
-            //console.log(`save pizza result = ${JSON.stringify(item)}`);
+            const item = yield persistenceManager.saveItems([Object.assign({}, req.body)]);
             res.json(item);
         }
         catch (err) {
@@ -134,9 +129,8 @@ app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 app.route('/order/:orderID')
     .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    let order = yield storeDBModel.getOrderModel().find({ orderID: req.params.orderID });
-    if (order.length > 0) {
+    let order = yield persistenceManager.getOrder(req.params.orderID);
+    if (order) {
         res.set('Content-Type', 'application/json').json(order);
     }
     else {
@@ -145,9 +139,8 @@ app.route('/order/:orderID')
     }
 }))
     .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    let order = yield storeDBModel.getOrderModel().findOneAndDelete({ orderID: req.params.orderID });
-    if (order) {
+    let order = yield persistenceManager.deleteOrders([req.params.orderID]);
+    if (order > 0) {
         res.set('Content-Type', 'application/json').json(order);
     }
     else {
@@ -156,23 +149,16 @@ app.route('/order/:orderID')
     }
 }));
 app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //await checkDB();
-    //console.log(req.headers);
     if (!req.body) {
         res.sendStatus(400);
     }
     else {
-        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
-            if ((yield storeDBModel.getOrderModel().find({ orderID: req.body.orderID })).length > 0) {
-                console.log(`Found some orders to delete first`);
-                let deletedItems = (yield storeDBModel.getOrderModel().deleteMany({ orderID: req.body.orderID })).deletedCount;
-                console.log(`Successfully deleted ${deletedItems} order(s). Trying to save a new order now...`);
+            if (yield persistenceManager.getOrder(req.body.orderID)) {
+                let deletedItems = (yield persistenceManager.deleteOrders([req.body.orderID]));
             }
-            const newOrder = new (storeDBModel.getOrderModel())(Object.assign({}, req.body));
-            const order = yield newOrder.save();
-            //console.log(`save order result = ${JSON.stringify(order)}`);
-            res.json(order);
+            const orders = yield persistenceManager.saveOrders([Object.assign({}, req.body)]);
+            res.json(orders);
         }
         catch (err) {
             console.log(`Error processing a /put Order request...`);
