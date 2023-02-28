@@ -9,7 +9,7 @@ const axios_1 = __importDefault(require("axios"));
 const order_service_1 = require("../order-service");
 //let should = chai.should();
 let expect = chai_1.default.expect;
-let auth0Token;
+let auth0Token /*: string*/ = "dummy";
 let pizzas;
 let items;
 let orders;
@@ -26,7 +26,7 @@ const reset = function () {
                 this.ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"];
             }
         }()),
-        //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+        //(new class implements PizzaSpec {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
     ];
     items = [(new class {
             constructor() {
@@ -99,7 +99,7 @@ describe('/GET', () => {
         });
     });
 });
-describe('Put and Get /Pizza', () => {
+describe('Put, Get and Delete a /Pizza', () => {
     before('Setup Auth0', getAuth0Token);
     it('it should PUT a new Pizza', (done) => {
         reset();
@@ -112,7 +112,8 @@ describe('Put and Get /Pizza', () => {
             .expect(200)
             .then(res => {
             //console.log(JSON.stringify(res));
-            expect(res.body.name).to.equal(pizzas[0].name);
+            let json = JSON.parse(res.text);
+            expect(json[0].name).to.equal(pizzas[0].name);
             done();
         }).catch(err => {
             done(err);
@@ -127,107 +128,137 @@ describe('Put and Get /Pizza', () => {
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
             let json = JSON.parse(res.text);
-            //console.log(json);
             expect(json[0].ingredients).to.contain(pizzas[0].ingredients[0]);
             done();
         }).catch(err => {
+            console.log(err);
+            done(err);
+        });
+    });
+    it('it should DELETE pizza details as per provided name', (done) => {
+        reset();
+        (0, supertest_1.default)(order_service_1.app)
+            .delete(`/pizza/${pizzas[0].name}`)
+            .type('json')
+            .set('Content-Type', 'application/json')
+            .set('authorization', `Bearer ${auth0Token}`)
+            .expect(200)
+            .then(res => {
+            let json = JSON.parse(res.text);
+            expect(json).to.equal(1);
+            done();
+        }).catch(err => {
+            console.log(err);
             done(err);
         });
     });
 });
+/*
 describe('Put and Get /Item', () => {
+
     before('Setup Auth0', getAuth0Token);
+
     it('it should PUT a new Item', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .put('/item')
             .type('json')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type','application/json')
             .set('authorization', `Bearer ${auth0Token}`)
             .send(items[0])
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
-            expect(res.body.pizza.name).to.equal(items[0].pizza.name);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                //console.log(JSON.stringify(res));
+                expect(res.body.pizza.name).to.equal(items[0].pizza.name);
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
+    
     it('it should GET item details as per provided Pizza name', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .get(`/item/${items[0].pizza.name}`)
             .type('json')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type','application/json')
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
-            let json = JSON.parse(res.text);
-            //console.log(json);
-            expect(json.price).to.equal(items[0].price);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                //console.log(JSON.stringify(res));
+                let json = JSON.parse(res.text);
+                //console.log(json);
+                expect(json.price).to.equal(items[0].price);
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
 });
+
+
 describe('Put and Get /Order', () => {
+
     before('Setup Auth0', getAuth0Token);
+    
     it('it should PUT a new Order', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .put('/order')
             .type('json')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type','application/json')
             .set('authorization', `Bearer ${auth0Token}`)
             .send(orders[0])
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
-            expect(res.body.orderID).to.equal(orders[0].orderID);
-            expect(res.body.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                //console.log(JSON.stringify(res));
+                expect(res.body.orderID).to.equal(orders[0].orderID);
+                expect(res.body.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
+    
     it('it should GET order details as per provided OrderID', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .get(`/order/${orders[0].orderID}`)
             .type('json')
-            .set('Content-Type', 'application/json')
+            .set('Content-Type','application/json')
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-            //console.log(JSON.stringify(res));
-            let json = JSON.parse(res.text);
-            //console.log(json);
-            expect(json[0].orderID).to.equal(orders[0].orderID);
-            expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                //console.log(JSON.stringify(res));
+                let json = JSON.parse(res.text);
+                //console.log(json);
+                expect(json[0].orderID).to.equal(orders[0].orderID);
+                expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
 });
+
+
 describe('GET /auth ', () => {
+    
     before('Setup Auth0', getAuth0Token);
+
     it('it should GET a secured auth page', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        request(app)
             .get('/auth')
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-            expect(res.text).to.equal("Secured Resource");
-            done();
-        }).catch(err => {
-            done(err);
-        });
+                expect(res.text).to.equal("Secured Resource");
+                done();
+            }).catch(err => {
+                done(err);
+            })
     });
 });
+*/

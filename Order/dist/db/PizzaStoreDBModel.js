@@ -60,13 +60,11 @@ class PizzaStoreModel {
             if (!this.connected) {
                 try {
                     console.log(`Initiating Mongo DB connectivity...`);
-                    yield mongoose_1.default.connect('mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/?retryWrites=true&w=majority')
-                        .then(() => {
-                        console.log(`Connected to Mongo DB. Connection ID = ${mongoose_1.default.connection.id}`);
-                        this.connected = true;
-                        mongoose_1.default.connection.on(`disconnected`, () => {
-                            console.log(`Mongo DB disconnect event triggered.`);
-                        });
+                    yield mongoose_1.default.connect('mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/?retryWrites=true&w=majority');
+                    console.log(`Connected to Mongo DB. Connection ID = ${mongoose_1.default.connection.id}`);
+                    this.connected = true;
+                    mongoose_1.default.connection.on(`disconnected`, () => {
+                        console.log(`Mongo DB disconnect event triggered.`);
                     });
                 }
                 catch (error) {
@@ -84,6 +82,9 @@ class PizzaStoreModel {
     }
     getOrderModel() {
         return this.OrderModel;
+    }
+    isConnected() {
+        return this.connected;
     }
     disconnect() {
         return __awaiter(this, void 0, void 0, function* () {

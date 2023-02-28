@@ -3,6 +3,7 @@ import express, { Express, Request, Response } from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import dotenv from 'dotenv';
 import { PizzaStoreModel } from './db/PizzaStoreDBModel';
+import { PersistenceManagerFactory } from './db/persistencemanager';
 
 let storeDBModel: PizzaStoreModel;
 
@@ -13,20 +14,16 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/*
 const jwtCheck = auth({
     audience: 'https://pizzaorderservice.pramodnairx',
     issuerBaseURL: 'https://dev-wmzvd34fb17s8ovr.us.auth0.com/',
     tokenSigningAlg: 'RS256'
   });
-//app.use(jwtCheck);
+app.use(jwtCheck);
+*/
 
-async function checkDB(){
-    if(!storeDBModel) {
-        //console.log(`Creating new Pizza Store DB Model`);
-        storeDBModel = new PizzaStoreModel();
-        await storeDBModel.setup();
-    }
-}
+const persistenceManager = PersistenceManagerFactory.getPersistenceManager(PersistenceManagerFactory.MONGO_DB);
 
 async function savePizza(req: Request) {
     const newPizza = new (storeDBModel.getPizzaModel())({...req.body});
@@ -43,8 +40,7 @@ app.get('/', async (req: Request, res: Response) => {
 
 app.route('/pizza/:name')
     .get(async(req: Request, res: Response) => {
-        await checkDB();
-        let pizza = await storeDBModel.getPizzaModel().find({"name": req.params.name});
+        let pizza = await persistenceManager.getPizzas(req.params.name);
         if( pizza.length > 0) {
             res.set('Content-Type','application/json').json(pizza);
         } else {
@@ -53,10 +49,9 @@ app.route('/pizza/:name')
         }
     })
     .delete(async(req: Request, res: Response) => {
-        await checkDB();
-        let pizza = await storeDBModel.getPizzaModel().findOneAndDelete({"name": req.params.name});
-        if(pizza) {
-            res.set('Content-Type','application/json').json(pizza);
+        let deletedPizzas = await persistenceManager.deletePizzas([req.params.name]);
+        if(deletedPizzas > 0) {
+            res.set('Content-Type','application/json').json(deletedPizzas);
         } else {
             console.log(`Unable to find pizza with name ${req.params.name}`);
             res.sendStatus(404);
@@ -64,20 +59,14 @@ app.route('/pizza/:name')
     });
 
 app.put('/pizza', async (req: Request, res: Response) => {
-    await checkDB();
-    //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
     } else {
-        //console.log(`Request body received as ${JSON.stringify(req.body)}`);
         try {
-            if( (await storeDBModel.getPizzaModel().find({name: req.body.name})).length > 0){
-                //console.log(`Found some pizzas to delete first`);
-                let deletedPizzas = (await storeDBModel.getPizzaModel().deleteMany({name: req.body.name})).deletedCount;
-                //console.log(`Successfully deleted ${deletedPizzas} pizza(s). Trying to save a new pizza now...`);
+            if( (await persistenceManager.getPizzas(req.body.name)).length > 0) {
+                let deletedPizzas = await persistenceManager.deletePizzas([req.params.name]);
             }
-            let pizza = await savePizza(req);
-            //console.log(`save pizza result = ${JSON.stringify(pizza)}`);
+            let pizza = await persistenceManager.savePizzas([{...req.body}]);
             res.json(pizza);
         } catch (err) {
             console.log(`Error processing a /put pizza request...`);
@@ -89,7 +78,7 @@ app.put('/pizza', async (req: Request, res: Response) => {
 
 app.route('/item/:pizza')
     .get(async(req: Request, res: Response) => {
-        await checkDB();
+        //await checkDB();
         let item = await storeDBModel.getItemModel().findOne({name: req.params.pizza});
         if( item /*&& item.length > 0*/) {
             res.set('Content-Type','application/json').json(item);
@@ -99,7 +88,7 @@ app.route('/item/:pizza')
         }
     })
     .delete(async(req: Request, res: Response) => {
-        await checkDB();
+        //await checkDB();
         let item = await storeDBModel.getItemModel().findOneAndDelete({name: req.params.pizza});
         if( item /*&& item.length > 0*/) {
             res.set('Content-Type','application/json').json(item);
@@ -110,7 +99,7 @@ app.route('/item/:pizza')
     });
 
 app.put('/item', async (req: Request, res: Response) => {
-    await checkDB();
+    //await checkDB();
     //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
@@ -136,7 +125,7 @@ app.put('/item', async (req: Request, res: Response) => {
 
 app.route('/order/:orderID')
     .get(async(req: Request, res: Response) => {
-        await checkDB();
+        //await checkDB();
         let order = await storeDBModel.getOrderModel().find({orderID: req.params.orderID});
         if( order.length > 0) {
             res.set('Content-Type','application/json').json(order);
@@ -146,7 +135,7 @@ app.route('/order/:orderID')
         }
     })
     .delete(async(req: Request, res: Response) => {
-        await checkDB();
+        //await checkDB();
         let order = await storeDBModel.getOrderModel().findOneAndDelete({orderID: req.params.orderID});
         if(order) {
             res.set('Content-Type','application/json').json(order);
@@ -157,7 +146,7 @@ app.route('/order/:orderID')
     });
 
 app.put('/order', async (req: Request, res: Response) => {
-    await checkDB();
+    //await checkDB();
     //console.log(req.headers);
     if(!req.body) {
         res.sendStatus(400);
@@ -182,7 +171,7 @@ app.put('/order', async (req: Request, res: Response) => {
 });
 
 app.get('/order', async (req: Request, res: Response) => {
-    await checkDB();
+    //await checkDB();
     let order = await storeDBModel.getOrderModel().find();
     if( order.length > 0) {
         res.set('Content-Type','application/json').json(order);

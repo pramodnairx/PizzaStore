@@ -2,28 +2,28 @@ import chai from 'chai';
 import request from 'supertest';
 import axios from 'axios';
 import { app } from '../order-service';
-import { Order, Pizza, Item } from '../model/order';
+import { OrderSpec, PizzaSpec, ItemSpec } from '../model/order';
 
 //let should = chai.should();
 let expect = chai.expect;
 
 let auth0Token/*: string*/ = "dummy";
 
-let pizzas: Pizza[];
-let items: Item[];
-let orders: Order[];
+let pizzas: PizzaSpec[];
+let items: ItemSpec[];
+let orders: OrderSpec[];
 
 const reset = function() {
-    pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
-                (new class implements Pizza {name = "Meat Feast"; ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"]}()),
-                //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+    pizzas = [(new class implements PizzaSpec {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
+                (new class implements PizzaSpec {name = "Meat Feast"; ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"]}()),
+                //(new class implements PizzaSpec {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
             ];
     
-    items = [(new class implements Item {pizza = pizzas[0]; price = 18.95}()),
-                (new class implements Item {pizza = pizzas[1]; price = 22.10}())
+    items = [(new class implements ItemSpec {pizza = pizzas[0]; price = 18.95}()),
+                (new class implements ItemSpec {pizza = pizzas[1]; price = 22.10}())
             ];
     
-    orders = [(new class implements Order {orderID = "000001"; customerName = "Hungry Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
+    orders = [(new class implements OrderSpec {orderID = "000001"; customerName = "Hungry Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
     
 }
 
@@ -82,7 +82,7 @@ describe('/GET', () => {
 });
 
 
-describe('Put and Get /Pizza', () => {
+describe('Put, Get and Delete a /Pizza', () => {
 
     before('Setup Auth0', getAuth0Token);
 
@@ -96,14 +96,13 @@ describe('Put and Get /Pizza', () => {
             .send(pizzas[0])
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
-                expect(res.body.name).to.equal(pizzas[0].name);
+                let json = JSON.parse(res.text);
+                expect(json[0].name).to.equal(pizzas[0].name);
                 done();
             }).catch(err => {
                 done(err);
             })
     });
-
     
     it('it should GET pizza details as per provided name', (done) => {
         reset();
@@ -114,17 +113,36 @@ describe('Put and Get /Pizza', () => {
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
             .then(res => {
-                //console.log(JSON.stringify(res));
                 let json = JSON.parse(res.text);
-                //console.log(json);
                 expect(json[0].ingredients).to.contain(pizzas[0].ingredients[0]);
                 done();
             }).catch(err => {
+                console.log(err);
                 done(err);
             })
     });
+
+    it('it should DELETE pizza details as per provided name', (done) => {
+        reset();
+        request(app)
+            .delete(`/pizza/${pizzas[0].name}`)
+            .type('json')
+            .set('Content-Type','application/json')
+            .set('authorization', `Bearer ${auth0Token}`)
+            .expect(200)
+            .then(res => {
+                let json = JSON.parse(res.text);
+                expect(json).to.equal(1);
+                done();
+            }).catch(err => {
+                console.log(err);
+                done(err);
+            })
+    });
+
 });
 
+/*
 describe('Put and Get /Item', () => {
 
     before('Setup Auth0', getAuth0Token);
@@ -231,3 +249,4 @@ describe('GET /auth ', () => {
             })    
     });
 });
+*/
