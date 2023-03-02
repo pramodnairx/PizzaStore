@@ -1,7 +1,7 @@
 import chai from 'chai';
 import request from 'supertest';
 import axios from 'axios';
-import { app } from '../service/order-service';
+import { app } from '../service/adapters/order-service-http';
 import { Order, Pizza, Item} from '../model/order';
 
 //let should = chai.should();
@@ -22,9 +22,7 @@ const reset = function() {
     items = [(new class implements Item{pizza = pizzas[0]; price = 18.95}()),
                 (new class implements Item{pizza = pizzas[1]; price = 22.10}())
             ];
-    
     orders = [(new class implements Order {orderID = "000002"; customerName = "Hungrier Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
-    
 }
 
 function getAuth0Token(done: Mocha.Done) {
@@ -96,7 +94,7 @@ describe('Put, Get and Delete a /Pizza', () => {
             .expect(200)
             .then(res => {
                 let json = JSON.parse(res.text);
-                expect(json[0].name).to.equal(pizzas[0].name);
+                expect(json.name).to.equal(pizzas[0].name);
                 done();
             }).catch(err => {
                 done(err);
@@ -157,7 +155,7 @@ describe('Put, Get and Delete /Item', () => {
             .expect(200)
             .then(res => {
                 let json = JSON.parse(res.text);
-                expect(json[0].pizza.name).to.equal(items[0].pizza.name);
+                expect(json.pizza.name).to.equal(items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);
@@ -217,8 +215,8 @@ describe('Put, Get and Delete an /Order', () => {
             .expect(200)
             .then(res => {
                 let json = JSON.parse(res.text);
-                expect(json[0].orderID).to.equal(orders[0].orderID);
-                expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                expect(json.orderID).to.equal(orders[0].orderID);
+                expect(json.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);

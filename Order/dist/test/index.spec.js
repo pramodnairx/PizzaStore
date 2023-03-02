@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chai_1 = __importDefault(require("chai"));
 const supertest_1 = __importDefault(require("supertest"));
 const axios_1 = __importDefault(require("axios"));
-const order_service_1 = require("../service/order-service");
+const order_service_http_1 = require("../service/adapters/order-service-http");
 //let should = chai.should();
 let expect = chai_1.default.expect;
 let auth0Token /*: string*/ = "dummy";
@@ -87,7 +87,7 @@ describe('/GET', () => {
     before('Setup Auth0', getAuth0Token);
     it('it should GET a welcome page response', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .get('/')
             .set('authorization', `Bearer ${auth0Token}`)
             .expect(200)
@@ -103,7 +103,7 @@ describe('Put, Get and Delete a /Pizza', () => {
     before('Setup Auth0', getAuth0Token);
     it('it should PUT a new Pizza', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .put('/pizza')
             .type('json')
             .set('Content-Type', 'application/json')
@@ -112,7 +112,7 @@ describe('Put, Get and Delete a /Pizza', () => {
             .expect(200)
             .then(res => {
             let json = JSON.parse(res.text);
-            expect(json[0].name).to.equal(pizzas[0].name);
+            expect(json.name).to.equal(pizzas[0].name);
             done();
         }).catch(err => {
             done(err);
@@ -120,7 +120,7 @@ describe('Put, Get and Delete a /Pizza', () => {
     });
     it('it should GET pizza details as per provided name', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .get(`/pizza/${pizzas[0].name}`)
             .type('json')
             .set('Content-Type', 'application/json')
@@ -137,7 +137,7 @@ describe('Put, Get and Delete a /Pizza', () => {
     });
     it('it should DELETE pizza details as per provided name', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .delete(`/pizza/${pizzas[0].name}`)
             .type('json')
             .set('Content-Type', 'application/json')
@@ -157,7 +157,7 @@ describe('Put, Get and Delete /Item', () => {
     before('Setup Auth0', getAuth0Token);
     it('it should PUT a new Item', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .put('/item')
             .type('json')
             .set('Content-Type', 'application/json')
@@ -166,7 +166,7 @@ describe('Put, Get and Delete /Item', () => {
             .expect(200)
             .then(res => {
             let json = JSON.parse(res.text);
-            expect(json[0].pizza.name).to.equal(items[0].pizza.name);
+            expect(json.pizza.name).to.equal(items[0].pizza.name);
             done();
         }).catch(err => {
             done(err);
@@ -174,7 +174,7 @@ describe('Put, Get and Delete /Item', () => {
     });
     it('it should GET item details as per provided Pizza name', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .get(`/item/${items[0].pizza.name}`)
             .type('json')
             .set('Content-Type', 'application/json')
@@ -190,7 +190,7 @@ describe('Put, Get and Delete /Item', () => {
     });
     it('it should DELETE Items as per details provided', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .delete(`/item/${items[0].pizza.name}`)
             .type('json')
             .set('Content-Type', 'application/json')
@@ -210,7 +210,7 @@ describe('Put, Get and Delete an /Order', () => {
     before('Setup Auth0', getAuth0Token);
     it('it should PUT a new Order', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .put('/order')
             .type('json')
             .set('Content-Type', 'application/json')
@@ -219,8 +219,8 @@ describe('Put, Get and Delete an /Order', () => {
             .expect(200)
             .then(res => {
             let json = JSON.parse(res.text);
-            expect(json[0].orderID).to.equal(orders[0].orderID);
-            expect(json[0].items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+            expect(json.orderID).to.equal(orders[0].orderID);
+            expect(json.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
             done();
         }).catch(err => {
             done(err);
@@ -228,7 +228,7 @@ describe('Put, Get and Delete an /Order', () => {
     });
     it('it should GET order details as per provided OrderID', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .get(`/order/${orders[0].orderID}`)
             .type('json')
             .set('Content-Type', 'application/json')
@@ -244,7 +244,7 @@ describe('Put, Get and Delete an /Order', () => {
     });
     it('it should DELETE Orders as per details provided', (done) => {
         reset();
-        (0, supertest_1.default)(order_service_1.app)
+        (0, supertest_1.default)(order_service_http_1.app)
             .delete(`/order/${orders[0].orderID}`)
             .type('json')
             .set('Content-Type', 'application/json')

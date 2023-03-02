@@ -12,14 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.app = void 0;
-const util_1 = __importDefault(require("util"));
-const express_1 = __importDefault(require("express"));
-const express_oauth2_jwt_bearer_1 = require("express-oauth2-jwt-bearer");
-const dotenv_1 = __importDefault(require("dotenv"));
-const persistencemanager_1 = require("../db/persistencemanager");
-const config_1 = __importDefault(require("config"));
+exports.OrderService = void 0;
 const winston_1 = __importDefault(require("winston"));
+const config_1 = __importDefault(require("config"));
+const persistencemanager_1 = require("../db/persistencemanager");
 const logger = winston_1.default.createLogger({
     level: `${config_1.default.get('orderService.logging.default')}`,
     format: winston_1.default.format.json(),
@@ -30,149 +26,132 @@ const logger = winston_1.default.createLogger({
         })
     ]
 });
-dotenv_1.default.config();
-const app = (0, express_1.default)();
-exports.app = app;
-const port = process.env.PORT;
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
-const jwtCheck = (0, express_oauth2_jwt_bearer_1.auth)({
-    audience: config_1.default.get(`orderService.auth.jwt.audience`),
-    issuerBaseURL: config_1.default.get(`orderService.auth.jwt.issuerBaseURL`),
-    tokenSigningAlg: config_1.default.get(`orderService.auth.jwt.tokenSigningAlg`)
-});
-if (config_1.default.get(`orderService.auth.jwt.useJWT`) === 'true') {
-    app.use(jwtCheck);
+class OrderService {
+    constructor() {
+        this.persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager();
+    }
+    /**
+     *
+     * @param pizzaName
+     * @returns array of pizza's matching the name. If no match an empty array is returned
+     */
+    getPizza(pizzaName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.getPizzas(pizzaName);
+        });
+    }
+    /**
+     * Deletes any existing pizzas with the same name and adds a new pizza
+     *
+     * @param pizza
+     * @returns the saved pizza as received from the backend
+     */
+    addPizza(pizza) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if ((yield this.persistenceManager.getPizzas(pizza.name)).length > 0) {
+                let deletedPizzas = yield this.persistenceManager.deletePizzas([pizza.name]);
+            }
+            let savedPizzas = yield this.persistenceManager.savePizzas([pizza]);
+            if (savedPizzas.length > 0) {
+                return savedPizzas[0];
+            }
+            else {
+                throw new Error(`Error adding a ${pizza.name} pizza.`);
+            }
+        });
+    }
+    /**
+     * Deletes all pizza's with the name as
+     *
+     * @param pizza
+     * @returns
+     */
+    deletePizza(pizza) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.deletePizzas([pizza]);
+        });
+    }
+    /**
+     *
+     * @param pizzaName
+     * @returns array of items's matching the name. If no match an empty array is returned
+     */
+    getItem(pizzaName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.getItems(pizzaName);
+        });
+    }
+    /**
+     * Deletes any existing items with the same pizza name and adds a new item
+     *
+     * @param item
+     * @returns the saved item as received from the backend
+     */
+    addItem(item) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if ((yield this.persistenceManager.getItems(item.pizza.name)).length > 0) {
+                let deletedItems = yield this.persistenceManager.deleteItems([item.pizza.name]);
+            }
+            let savedItems = yield this.persistenceManager.saveItems([item]);
+            if (savedItems.length > 0) {
+                return savedItems[0];
+            }
+            else {
+                throw new Error(`Error adding a ${item.pizza.name} item.`);
+            }
+        });
+    }
+    /**
+     * Deletes all items's with the pizza name provided
+     *
+     * @param pizza
+     * @returns
+     */
+    deleteItem(pizza) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.deleteItems([pizza]);
+        });
+    }
+    /**
+     *
+     * @param orderID
+     * @returns Order matching the name. If no match null is returned
+     */
+    getOrder(orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.getOrder(orderID);
+        });
+    }
+    /**
+     * Deletes any existing order with the provided OrderID and adds a new one
+     *
+     * @param orderID
+     * @returns the saved Order as received from the backend
+     */
+    addOrder(order) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (yield this.persistenceManager.getOrder(order.orderID)) {
+                let deletedOrder = yield this.persistenceManager.deleteOrders([order.orderID]);
+            }
+            let savedOrder = yield this.persistenceManager.saveOrders([order]);
+            if (savedOrder.length > 0) {
+                return savedOrder[0];
+            }
+            else {
+                throw new Error(`Error adding Order no. ${order.orderID}`);
+            }
+        });
+    }
+    /**
+     * Deletes all Orders with the provided orderID
+     *
+     * @param orderID
+     * @returns
+     */
+    deleteOrder(orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.persistenceManager.deleteOrders([orderID]);
+        });
+    }
 }
-const persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager();
-app.get('/auth', (req, res) => {
-    res.send(`Secured Resource`);
-});
-app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
-}));
-app.route('/pizza/:name')
-    .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let pizza = yield persistenceManager.getPizzas(req.params.name);
-    if (pizza.length > 0) {
-        res.set('Content-Type', 'application/json').json(pizza);
-    }
-    else {
-        logger.info(`Unable to find pizza with name ${req.params.name}`);
-        res.sendStatus(404);
-    }
-}))
-    .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let deletedPizzas = yield persistenceManager.deletePizzas([req.params.name]);
-    if (deletedPizzas > 0) {
-        res.set('Content-Type', 'application/json').json(deletedPizzas);
-    }
-    else {
-        logger.info(`Unable to find pizza with name ${req.params.name}`);
-        res.sendStatus(404);
-    }
-}));
-app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!req.body) {
-        res.sendStatus(400);
-    }
-    else {
-        try {
-            if ((yield persistenceManager.getPizzas(req.body.name)).length > 0) {
-                let deletedPizzas = yield persistenceManager.deletePizzas([req.params.name]);
-            }
-            let pizza = yield persistenceManager.savePizzas([Object.assign({}, req.body)]);
-            res.json(pizza);
-        }
-        catch (err) {
-            logger.warn(`Error processing a /put pizza request...`);
-            logger.warn(err);
-            res.status(500).json({ "error": err });
-        }
-    }
-}));
-app.route('/item/:pizza')
-    .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let item = yield persistenceManager.getItems(req.params.pizza);
-    if (item && item.length > 0) {
-        res.set('Content-Type', 'application/json').json(item);
-    }
-    else {
-        logger.info(`Unable to find item with name ${req.params.pizza}`);
-        res.sendStatus(404);
-    }
-}))
-    .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let deletedCount = yield persistenceManager.deleteItems([req.params.pizza]);
-    if (deletedCount > 0) {
-        res.set('Content-Type', 'application/json').json(deletedCount);
-    }
-    else {
-        logger.info(`Unable to find item with name ${req.params.pizza}`);
-        res.sendStatus(404);
-    }
-}));
-app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!req.body) {
-        res.sendStatus(400);
-    }
-    else {
-        try {
-            if ((yield persistenceManager.getItems(req.body.pizza.name)).length > 0) {
-                //console.log(`Found some items to delete first`);
-                let deletedItems = (yield persistenceManager.deleteItems([req.body.pizza.name]));
-                //console.log(`Successfully deleted ${deletedItems} items(s). Trying to save a new item now...`);
-            }
-            const item = yield persistenceManager.saveItems([Object.assign({}, req.body)]);
-            res.json(item);
-        }
-        catch (err) {
-            logger.warn(`Error processing a /put item request...`);
-            logger.warn(err);
-            res.status(500).json({ "error": err });
-        }
-    }
-}));
-app.route('/order/:orderID')
-    .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let order = yield persistenceManager.getOrder(req.params.orderID);
-    if (order) {
-        res.set('Content-Type', 'application/json').json(order);
-    }
-    else {
-        logger.info(`Unable to find Order with ID ${req.params.orderID}`);
-        res.sendStatus(404);
-    }
-}))
-    .delete((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let order = yield persistenceManager.deleteOrders([req.params.orderID]);
-    if (order > 0) {
-        res.set('Content-Type', 'application/json').json(order);
-    }
-    else {
-        logger.info(`Unable to find Order with ID ${req.params.orderID}`);
-        res.sendStatus(404);
-    }
-}));
-app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!req.body) {
-        res.sendStatus(400);
-    }
-    else {
-        try {
-            if (yield persistenceManager.getOrder(req.body.orderID)) {
-                let deletedItems = (yield persistenceManager.deleteOrders([req.body.orderID]));
-            }
-            const orders = yield persistenceManager.saveOrders([Object.assign({}, req.body)]);
-            res.json(orders);
-        }
-        catch (err) {
-            logger.warn(`Error processing a /put Order request...`);
-            logger.warn(err);
-            res.status(500).json({ "error": err });
-        }
-    }
-}));
-let listener = app.listen(() => {
-    logger.info(`Request to start Pizza store app received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
-});
+exports.OrderService = OrderService;
