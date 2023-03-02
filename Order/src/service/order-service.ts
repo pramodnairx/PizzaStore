@@ -1,18 +1,7 @@
-import winston from 'winston';
 import config from 'config'; 
 import { Item, Order, Pizza } from '../model/order';
 import { PersistenceManagerFactory } from '../db/persistencemanager';
-
-const logger = winston.createLogger({
-    level: `${config.get('orderService.logging.default')}`,
-    format: winston.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        })
-    ]
-});
+import { logger } from '../util/utils';
 
 class OrderService {
 

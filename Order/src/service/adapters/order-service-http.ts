@@ -4,19 +4,8 @@ import { auth } from 'express-oauth2-jwt-bearer';
 import dotenv from 'dotenv';
 import { PersistenceManagerFactory } from '../../db/persistencemanager';
 import config from 'config';
-import winston from 'winston';
 import { OrderService } from '../order-service';
-
-const logger = winston.createLogger({
-    level: `${config.get('orderService.logging.default')}`,
-    format: winston.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        })
-    ]
-});
+import { logger } from '../../util/utils';
 
 dotenv.config();
 

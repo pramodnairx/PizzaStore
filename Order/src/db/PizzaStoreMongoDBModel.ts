@@ -1,18 +1,7 @@
 import { Order, Pizza, Item } from '../model/order'; 
 import mongoose, { Schema } from 'mongoose';
 import config from 'config';
-import winston from 'winston';
-
-const logger = winston.createLogger({
-    level: `${config.get('orderService.logging.default')}`,
-    format: winston.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        })
-    ]
-});
+import { logger } from '../util/utils';
 
 class PizzaStoreMongoDBModel {
     
