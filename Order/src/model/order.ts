@@ -1,19 +1,19 @@
-interface OrderSpec {    
+interface Order {    
     orderID: string; 
     customerName: string; 
     customerAddress: string; 
-    items: ItemSpec[];
+    items: Item[];
 }
 
-interface PizzaSpec {
+interface Pizza {
     name: string;
     ingredients: string[];
 }
 
-interface ItemSpec {
-    pizza: PizzaSpec;
+interface Item {
+    pizza: Pizza;
     price: number;
 }
 
 
-export { OrderSpec, PizzaSpec, ItemSpec }
+export { Order, Pizza, Item }

@@ -1,55 +1,55 @@
-import { PizzaSpec, ItemSpec, OrderSpec } from "../model/order";
-import { PizzaStoreModel } from "./PizzaStoreDBModel";
+import { Pizza, Item, Order } from "../model/order";
+import { PizzaStoreMongoDBModel } from "./PizzaStoreMongoDBModel";
+import config from 'config';
 
 interface PersistenceManager {    
-    getPizzas(name: string) : Promise<PizzaSpec[]>;
-    savePizzas(pizza: PizzaSpec[]) : Promise<PizzaSpec[]>;
+    getPizzas(name: string) : Promise<Pizza[]>;
+    savePizzas(pizza: Pizza[]) : Promise<Pizza[]>;
     deletePizzas(names: string[]) : Promise<number>;
 
-    getItems(name: string) : Promise<ItemSpec[]>;
-    saveItems(item: ItemSpec[]) : Promise<ItemSpec[]>;
+    getItems(name: string) : Promise<Item[]>;
+    saveItems(item: Item[]) : Promise<Item[]>;
     deleteItems(names: string[]) : Promise<number>;
 
-    getOrder(orderID: string) : Promise<OrderSpec | null>;
-    saveOrders(orders: OrderSpec[]) : Promise<OrderSpec[]>;
+    getOrder(orderID: string) : Promise<Order | null>;
+    saveOrders(orders: Order[]) : Promise<Order[]>;
     deleteOrders(orderIDs: string[]) : Promise<number>;
-
 }
 
 class PersistenceManagerFactory {
-    static MONGO_DB = 1;
+    static MONGO_DB = "MONGO_DB";
     static REDIS = 2;
     //...and so on
 
     private static _mongoDBPM: PersistenceManager;
 
-    static getPersistenceManager(type: number): PersistenceManager {
-        if(type === PersistenceManagerFactory.MONGO_DB) {
+    static getPersistenceManager(): PersistenceManager {
+        if (config.get(`orderService.db.provider`) === PersistenceManagerFactory.MONGO_DB ) {
             if(!PersistenceManagerFactory._mongoDBPM)
                 PersistenceManagerFactory._mongoDBPM = new MongoDBPersistenceManager();
             return PersistenceManagerFactory._mongoDBPM;
         } else {
-            throw new Error(`Persistence Manager not implemented for the provided type ${type}`);    
+            throw new Error(`Persistence Manager not implemented for the provided type ${config.get(`orderService.db.provider`)}`);
         }
     }
 }
 
 class MongoDBPersistenceManager implements PersistenceManager {
 
-    private _storeDBModel: PizzaStoreModel;
+    private _storeDBModel: PizzaStoreMongoDBModel;
 
     constructor(){
-        this._storeDBModel = new PizzaStoreModel();
+        this._storeDBModel = new PizzaStoreMongoDBModel();
     }
 
-    async getPizzas(name: string): Promise<PizzaSpec[]> {
+    async getPizzas(name: string): Promise<Pizza[]> {
         this.checkDB();
         let pizzas = await this._storeDBModel.getPizzaModel().find({"name": name});
         return pizzas;
     }
 
-    async savePizzas(pizzas: PizzaSpec[]): Promise<PizzaSpec[]> {
-        let savedPizzas: PizzaSpec[] = [];
+    async savePizzas(pizzas: Pizza[]): Promise<Pizza[]> {
+        let savedPizzas: Pizza[] = [];
         this.checkDB();
         for (let pizza of pizzas) {
             const newPizza = new (this._storeDBModel.getPizzaModel())(pizza);
@@ -64,14 +64,14 @@ class MongoDBPersistenceManager implements PersistenceManager {
         return deletedPizzas.deletedCount;
     }
 
-    async getItems(pizzaName: string): Promise<ItemSpec[]> {
+    async getItems(pizzaName: string): Promise<Item[]> {
         this.checkDB();
         let items = await this._storeDBModel.getItemModel().find({name: pizzaName});
         return items;
     }
 
-    async saveItems(items: ItemSpec[]): Promise<ItemSpec[]> {
-        let savedItems: ItemSpec[] = [];
+    async saveItems(items: Item[]): Promise<Item[]> {
+        let savedItems: Item[] = [];
         this.checkDB();
         for (let item of items) {
             const newItem = new (this._storeDBModel.getItemModel())(item);
@@ -86,14 +86,14 @@ class MongoDBPersistenceManager implements PersistenceManager {
         return deletedItems.deletedCount;
     }
 
-    async getOrder(orderID: string): Promise<OrderSpec | null> {
+    async getOrder(orderID: string): Promise<Order | null> {
         this.checkDB();
         let order = await this._storeDBModel.getOrderModel().findOne({orderID: orderID});
         return order;
     }
 
-    async saveOrders(orders: OrderSpec[]): Promise<OrderSpec[]> {
-        let savedOrders: OrderSpec[] = [];
+    async saveOrders(orders: Order[]): Promise<Order[]> {
+        let savedOrders: Order[] = [];
         this.checkDB();
         for (let order of orders) {
             const newOrder = new (this._storeDBModel.getOrderModel())(order);

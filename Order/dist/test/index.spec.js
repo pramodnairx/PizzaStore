@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chai_1 = __importDefault(require("chai"));
 const supertest_1 = __importDefault(require("supertest"));
 const axios_1 = __importDefault(require("axios"));
-const order_service_1 = require("../order-service");
+const order_service_1 = require("../service/order-service");
 //let should = chai.should();
 let expect = chai_1.default.expect;
 let auth0Token /*: string*/ = "dummy";
@@ -26,7 +26,7 @@ const reset = function () {
                 this.ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"];
             }
         }()),
-        //(new class implements PizzaSpec {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+        //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
     ];
     items = [(new class {
             constructor() {

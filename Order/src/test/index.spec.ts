@@ -1,29 +1,29 @@
 import chai from 'chai';
 import request from 'supertest';
 import axios from 'axios';
-import { app } from '../order-service';
-import { OrderSpec, PizzaSpec, ItemSpec } from '../model/order';
+import { app } from '../service/order-service';
+import { Order, Pizza, Item} from '../model/order';
 
 //let should = chai.should();
 let expect = chai.expect;
 
 let auth0Token/*: string*/ = "dummy";
 
-let pizzas: PizzaSpec[];
-let items: ItemSpec[];
-let orders: OrderSpec[];
+let pizzas: Pizza[];
+let items: Item[];
+let orders: Order[];
 
 const reset = function() {
-    pizzas = [(new class implements PizzaSpec {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
-                (new class implements PizzaSpec {name = "Meat Feast"; ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"]}()),
-                //(new class implements PizzaSpec {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
+    pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
+                (new class implements Pizza {name = "Meat Feast"; ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"]}()),
+                //(new class implements Pizza {name = "Hawaiian"; ingredients = "Pineapple, Prawns";}())
             ];
     
-    items = [(new class implements ItemSpec {pizza = pizzas[0]; price = 18.95}()),
-                (new class implements ItemSpec {pizza = pizzas[1]; price = 22.10}())
+    items = [(new class implements Item{pizza = pizzas[0]; price = 18.95}()),
+                (new class implements Item{pizza = pizzas[1]; price = 22.10}())
             ];
     
-    orders = [(new class implements OrderSpec {orderID = "000002"; customerName = "Hungrier Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
+    orders = [(new class implements Order {orderID = "000002"; customerName = "Hungrier Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
     
 }
 

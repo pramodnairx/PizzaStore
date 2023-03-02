@@ -8,27 +8,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PersistenceManagerFactory = void 0;
-const PizzaStoreDBModel_1 = require("./PizzaStoreDBModel");
+const PizzaStoreMongoDBModel_1 = require("./PizzaStoreMongoDBModel");
+const config_1 = __importDefault(require("config"));
 class PersistenceManagerFactory {
-    static getPersistenceManager(type) {
-        if (type === PersistenceManagerFactory.MONGO_DB) {
+    static getPersistenceManager() {
+        if (config_1.default.get(`orderService.db.provider`) === PersistenceManagerFactory.MONGO_DB) {
             if (!PersistenceManagerFactory._mongoDBPM)
                 PersistenceManagerFactory._mongoDBPM = new MongoDBPersistenceManager();
             return PersistenceManagerFactory._mongoDBPM;
         }
         else {
-            throw new Error(`Persistence Manager not implemented for the provided type ${type}`);
+            throw new Error(`Persistence Manager not implemented for the provided type ${config_1.default.get(`orderService.db.provider`)}`);
         }
     }
 }
 exports.PersistenceManagerFactory = PersistenceManagerFactory;
-PersistenceManagerFactory.MONGO_DB = 1;
+PersistenceManagerFactory.MONGO_DB = "MONGO_DB";
 PersistenceManagerFactory.REDIS = 2;
 class MongoDBPersistenceManager {
     constructor() {
-        this._storeDBModel = new PizzaStoreDBModel_1.PizzaStoreModel();
+        this._storeDBModel = new PizzaStoreMongoDBModel_1.PizzaStoreMongoDBModel();
     }
     getPizzas(name) {
         return __awaiter(this, void 0, void 0, function* () {
