@@ -8,24 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderService = void 0;
-const winston_1 = __importDefault(require("winston"));
-const config_1 = __importDefault(require("config"));
 const persistencemanager_1 = require("../db/persistencemanager");
-const logger = winston_1.default.createLogger({
-    level: `${config_1.default.get('orderService.logging.default')}`,
-    format: winston_1.default.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston_1.default.transports.Console({
-            format: winston_1.default.format.simple(),
-        })
-    ]
-});
 class OrderService {
     constructor() {
         this.persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager();

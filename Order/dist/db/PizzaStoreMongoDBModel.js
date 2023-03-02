@@ -38,17 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PizzaStoreMongoDBModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const config_1 = __importDefault(require("config"));
-const winston_1 = __importDefault(require("winston"));
-const logger = winston_1.default.createLogger({
-    level: `${config_1.default.get('orderService.logging.default')}`,
-    format: winston_1.default.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston_1.default.transports.Console({
-            format: winston_1.default.format.simple(),
-        })
-    ]
-});
+const utils_1 = require("../util/utils");
 class PizzaStoreMongoDBModel {
     constructor() {
         this.connected = false;
@@ -74,12 +64,12 @@ class PizzaStoreMongoDBModel {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.connected) {
                 try {
-                    logger.info(`Initiating Mongo DB connectivity...`);
+                    utils_1.logger.info(`Initiating Mongo DB connectivity...`);
                     yield mongoose_1.default.connect(config_1.default.get(`orderService.db.connectionString`));
-                    logger.info(`Connected to Mongo DB. Connection ID = ${mongoose_1.default.connection.id}`);
+                    utils_1.logger.info(`Connected to Mongo DB. Connection ID = ${mongoose_1.default.connection.id}`);
                     this.connected = true;
                     mongoose_1.default.connection.on(`disconnected`, () => {
-                        logger.info(`Mongo DB disconnect event triggered.`);
+                        utils_1.logger.info(`Mongo DB disconnect event triggered.`);
                     });
                 }
                 catch (error) {
@@ -104,12 +94,12 @@ class PizzaStoreMongoDBModel {
     disconnect() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.connected && mongoose_1.default.connection) {
-                logger.info(`Disconnecting Mongo DB connection`);
+                utils_1.logger.info(`Disconnecting Mongo DB connection`);
                 yield mongoose_1.default.connection.close();
-                logger.info(`Mongo DB disconnected`);
+                utils_1.logger.info(`Mongo DB disconnected`);
             }
             else {
-                logger.info(`No active Mongo DB connection to disconnect`);
+                utils_1.logger.info(`No active Mongo DB connection to disconnect`);
             }
         });
     }

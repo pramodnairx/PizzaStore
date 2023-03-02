@@ -15,36 +15,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 const util_1 = __importDefault(require("util"));
 const express_1 = __importDefault(require("express"));
-const express_oauth2_jwt_bearer_1 = require("express-oauth2-jwt-bearer");
+//import { auth } from 'express-oauth2-jwt-bearer';
 const dotenv_1 = __importDefault(require("dotenv"));
 const persistencemanager_1 = require("../../db/persistencemanager");
-const config_1 = __importDefault(require("config"));
-const winston_1 = __importDefault(require("winston"));
 const order_service_1 = require("../order-service");
-const logger = winston_1.default.createLogger({
-    level: `${config_1.default.get('orderService.logging.default')}`,
-    format: winston_1.default.format.json(),
-    //defaultMeta: { service: 'user-service' },
-    transports: [
-        new winston_1.default.transports.Console({
-            format: winston_1.default.format.simple(),
-        })
-    ]
-});
+const utils_1 = require("../../util/utils");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 exports.app = app;
 const port = process.env.PORT;
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-const jwtCheck = (0, express_oauth2_jwt_bearer_1.auth)({
-    audience: config_1.default.get(`orderService.auth.jwt.audience`),
-    issuerBaseURL: config_1.default.get(`orderService.auth.jwt.issuerBaseURL`),
-    tokenSigningAlg: config_1.default.get(`orderService.auth.jwt.tokenSigningAlg`)
-});
-if (config_1.default.get(`orderService.auth.jwt.useJWT`) === 'true') {
+/*
+const jwtCheck = auth({
+    audience: config.get(`orderService.auth.jwt.audience`),
+    issuerBaseURL: config.get(`orderService.auth.jwt.issuerBaseURL`),
+    tokenSigningAlg: config.get(`orderService.auth.jwt.tokenSigningAlg`)
+  });
+
+if(config.get(`orderService.auth.jwt.useJWT`) === 'true') {
     app.use(jwtCheck);
 }
+*/
 const persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager();
 const orderService = new order_service_1.OrderService();
 app.get('/auth', (req, res) => {
@@ -60,7 +52,7 @@ app.route('/pizza/:name')
         res.set('Content-Type', 'application/json').json(pizza);
     }
     else {
-        logger.info(`Unable to find pizza with name ${req.params.name}`);
+        utils_1.logger.info(`Unable to find pizza with name ${req.params.name}`);
         res.sendStatus(404);
     }
 }))
@@ -70,7 +62,7 @@ app.route('/pizza/:name')
         res.set('Content-Type', 'application/json').json(deletedPizzas);
     }
     else {
-        logger.info(`Unable to find pizza with name ${req.params.name}`);
+        utils_1.logger.info(`Unable to find pizza with name ${req.params.name}`);
         res.sendStatus(404);
     }
 }));
@@ -84,8 +76,8 @@ app.put('/pizza', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.json(pizza);
         }
         catch (err) {
-            logger.warn(`Error processing a /put pizza request...`);
-            logger.warn(err);
+            utils_1.logger.warn(`Error processing a /put pizza request...`);
+            utils_1.logger.warn(err);
             res.status(500).json({ "error": err });
         }
     }
@@ -97,7 +89,7 @@ app.route('/item/:pizza')
         res.set('Content-Type', 'application/json').json(item);
     }
     else {
-        logger.info(`Unable to find item with name ${req.params.pizza}`);
+        utils_1.logger.info(`Unable to find item with name ${req.params.pizza}`);
         res.sendStatus(404);
     }
 }))
@@ -107,7 +99,7 @@ app.route('/item/:pizza')
         res.set('Content-Type', 'application/json').json(deletedCount);
     }
     else {
-        logger.info(`Unable to find item with name ${req.params.pizza}`);
+        utils_1.logger.info(`Unable to find item with name ${req.params.pizza}`);
         res.sendStatus(404);
     }
 }));
@@ -124,8 +116,8 @@ app.put('/item', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.json(item);
         }
         catch (err) {
-            logger.warn(`Error processing a /put item request...`);
-            logger.warn(err);
+            utils_1.logger.warn(`Error processing a /put item request...`);
+            utils_1.logger.warn(err);
             res.status(500).json({ "error": err });
         }
     }
@@ -137,7 +129,7 @@ app.route('/order/:orderID')
         res.set('Content-Type', 'application/json').json(order);
     }
     else {
-        logger.info(`Unable to find Order with ID ${req.params.orderID}`);
+        utils_1.logger.info(`Unable to find Order with ID ${req.params.orderID}`);
         res.sendStatus(404);
     }
 }))
@@ -147,7 +139,7 @@ app.route('/order/:orderID')
         res.set('Content-Type', 'application/json').json(order);
     }
     else {
-        logger.info(`Unable to find Order with ID ${req.params.orderID}`);
+        utils_1.logger.info(`Unable to find Order with ID ${req.params.orderID}`);
         res.sendStatus(404);
     }
 }));
@@ -164,12 +156,12 @@ app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.json(orders);
         }
         catch (err) {
-            logger.warn(`Error processing a /put Order request...`);
-            logger.warn(err);
+            utils_1.logger.warn(`Error processing a /put Order request...`);
+            utils_1.logger.warn(err);
             res.status(500).json({ "error": err });
         }
     }
 }));
 let listener = app.listen(() => {
-    logger.info(`Request to start Pizza store app received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
+    utils_1.logger.info(`Request to start Pizza store app received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
 });

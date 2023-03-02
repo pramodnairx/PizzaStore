@@ -1,6 +1,6 @@
 import util from 'util';
 import express, { Express, Request, Response } from 'express';
-import { auth } from 'express-oauth2-jwt-bearer';
+//import { auth } from 'express-oauth2-jwt-bearer';
 import dotenv from 'dotenv';
 import { PersistenceManagerFactory } from '../../db/persistencemanager';
 import config from 'config';
@@ -14,6 +14,7 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/*
 const jwtCheck = auth({
     audience: config.get(`orderService.auth.jwt.audience`),
     issuerBaseURL: config.get(`orderService.auth.jwt.issuerBaseURL`),
@@ -23,6 +24,7 @@ const jwtCheck = auth({
 if(config.get(`orderService.auth.jwt.useJWT`) === 'true') {
     app.use(jwtCheck);
 }
+*/
 
 const persistenceManager = PersistenceManagerFactory.getPersistenceManager();
 const orderService = new OrderService();
