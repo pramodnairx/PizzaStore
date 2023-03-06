@@ -24,4 +24,4 @@ interface Item {
 }
 
 
-export { Order, Pizza, Item }
+export { Order, Pizza, Item, OrderStatus }

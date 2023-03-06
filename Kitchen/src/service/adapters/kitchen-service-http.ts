@@ -4,6 +4,7 @@ import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import config from 'config';
 import { logger } from '../../util/utils';
+import { KitchenService } from '../kitchen-service';
 
 
 dotenv.config();
@@ -25,6 +26,9 @@ if(config.get(`orderService.auth.jwt.useJWT`) === 'true') {
 }
 */
 
+const kitchenService = new KitchenService();
+kitchenService.init();
+
 app.get('/auth', (req: Request, res: Response) => {
     res.send(`Secured Resource`);
 });
@@ -36,6 +40,8 @@ app.get('/', async (req: Request, res: Response) => {
 app.put('/order', async (req: Request, res: Response) => {
     if(!req.body) {
         res.sendStatus(400);
+    } else if (!kitchenService.isReady()) {
+        res.sendStatus(503); //Service unavailable
     } else {
         try {
             res.json(`The kitchen is closed right now`);

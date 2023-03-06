@@ -135,9 +135,6 @@ app.put('/order', async (req: Request, res: Response) => {
         res.sendStatus(400);
     } else {
         try {
-            if(await orderService.getOrder(req.body.orderID)){
-                let deletedItems = (await orderService.deleteOrder(req.body.orderID));
-            }
             const orders = await orderService.addOrder({...req.body});
             res.json(orders);
         } catch (err) {

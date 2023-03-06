@@ -17,7 +17,15 @@
             "debug": "debug",
             "test": "verbose",
             "prod": "warn"
+        },
+        "messaging": {
+            "kafka": {
+                "client-id": "kitchen-service",
+                "group-id": "PizzaStore",
+                "brokers": ["127.0.0.1:9092"],
+                "order-topic-ack": "ack-orders",
+                "order-topic-ready": "ready-orders"
+            }
         } 
-
     }
 }

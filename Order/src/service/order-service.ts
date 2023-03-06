@@ -1,11 +1,17 @@
 import config from 'config'; 
-import { Item, Order, Pizza } from '../model/order';
+import { Item, Order, OrderStatus, Pizza } from '../model/order';
 import { PersistenceManagerFactory } from '../db/persistencemanager';
 import { logger } from '../util/utils';
+import { Kafka } from 'kafkajs';
 
 class OrderService {
 
-    persistenceManager = PersistenceManagerFactory.getPersistenceManager();
+    private persistenceManager = PersistenceManagerFactory.getPersistenceManager();
+    private kafka = new Kafka({
+        clientId: config.get(`orderService.messaging.kafka.client-id`),
+        brokers: config.get(`orderService.messaging.kafka.brokers`)
+    });
+    
 
     /**
      * 
@@ -92,20 +98,33 @@ class OrderService {
     }
 
     /**
-     * Deletes any existing order with the provided OrderID and adds a new one
+     * Deletes any existing order with the provided OrderID, persists the new order details
+     * and posts the saved order to Kafka acknowledged orders topic
      * 
      * @param orderID 
-     * @returns the saved Order as received from the backend
+     * @returns void
      */
-    public async addOrder(order: Order): Promise<Order> {
+    public async addOrder(order: Order): Promise<void> {
         if(await this.persistenceManager.getOrder(order.orderID)) {
             let deletedOrder = await this.persistenceManager.deleteOrders([order.orderID]);
         }
+        order.status = OrderStatus.Acknowledged;
         let savedOrder =  await this.persistenceManager.saveOrders([order]);
         if(savedOrder.length > 0) {
-            return savedOrder[0];
+            let producer = this.kafka.producer();
+            await producer.connect();
+            await producer.send({
+                topic: config.get(`orderService.messaging.kafka.order-topic-ack`),
+                messages: [
+                    {
+                        key: savedOrder[0].orderID,
+                        value: JSON.stringify(savedOrder[0])
+                    }
+                ]
+            });
+            await producer.disconnect();
         } else {
-            throw new Error(`Error adding Order no. ${order.orderID}`);
+            throw new Error(`Error ackowledging Order no. ${order.orderID}`);
         }
     }
 

@@ -1,5 +1,13 @@
-interface Order {    
-    orderID: string; 
+enum OrderStatus {
+    Initialized = "INIT",
+    Acknowledged = "ACK",
+    Processing = "PROC",
+    Ready = "READY"
+}
+
+interface Order {  
+    orderID: string;
+    status: OrderStatus;
     customerName: string; 
     customerAddress: string; 
     items: Item[];
@@ -16,4 +24,4 @@ interface Item {
 }
 
 
-export { Order, Pizza, Item }
+export { Order, Pizza, Item, OrderStatus }
