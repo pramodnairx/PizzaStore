@@ -34,7 +34,7 @@ app.get('/auth', (req: Request, res: Response) => {
 });
 
 app.get('/', async (req: Request, res: Response) => {
-    res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
+    res.send(`Welcome to the Pizza Store Order service. Your response status was - ${res.statusCode}`);
 });
 
 app.route('/pizza/:name')
@@ -149,7 +149,7 @@ app.put('/order', async (req: Request, res: Response) => {
 });
 
 let listener = app.listen(() => {
-    logger.info(`Request to start Pizza store app received... [${util.inspect(listener.address(), false, null, true)}]`);
+    logger.info(`Request to start Pizza store order service received... [${util.inspect(listener.address(), false, null, true)}]`);
 });
 
 export {app};

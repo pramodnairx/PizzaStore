@@ -1,13 +1,5 @@
-enum OrderStatus {
-    Initialized = "INIT",
-    Acknowledged = "ACK",
-    Processing = "PROC",
-    Ready = "READY"
-}
-
-interface Order {  
-    orderID: string;
-    status: OrderStatus;
+interface Order {    
+    orderID: string; 
     customerName: string; 
     customerAddress: string; 
     items: Item[];

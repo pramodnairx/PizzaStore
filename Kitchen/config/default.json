@@ -1,5 +1,5 @@
 {
-    "orderService": {
+    "kitchenService": {
         "db": {
             "provider": "MONGO_DB",
             "connectionString": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/?retryWrites=true&w=majority"
@@ -17,11 +17,6 @@
             "debug": "debug",
             "test": "verbose",
             "prod": "warn"
-        },
-        "messaging": {
-            "kafka": {
-                
-            }
         } 
 
     }

@@ -1,8 +1,7 @@
 {
-  "name": "order",
+  "name": "kitchen",
   "version": "1.0.0",
-  "description": "Order service for the Pizza store",
-  "____________type": "module",
+  "description": "Kitchen service for the Pizza store",
   "main": "./dist/index.js",
   "scripts": {
     "clean": "npx tsc --build --clean",
@@ -11,7 +10,6 @@
     "start": "node dist/index.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
   },
-  "keywords": [],
   "author": "Pramod Nair",
   "license": "ISC",
   "dependencies": {
