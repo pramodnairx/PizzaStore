@@ -20,7 +20,10 @@
         },
         "messaging": {
             "kafka": {
-                
+                "client-id": "order-service",
+                "group-id": "PizzaStore",
+                "brokers": ["127.0.0.1:9092"],
+                "order-topic-ack": "ack-orders"
             }
         } 
 
