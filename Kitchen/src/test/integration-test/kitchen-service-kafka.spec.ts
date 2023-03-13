@@ -13,6 +13,13 @@ let pizzas: Pizza[];
 let items: Item[];
 let orders: Order[];
 
+let kafka = new Kafka({
+    clientId: config.get(`kitchenService.integration-test.kafka-client-id`),
+    brokers: config.get(`kitchenService.messaging.kafka.brokers`)
+});
+let producer = kafka.producer();
+let consumer = kafka.consumer({groupId: config.get(`kitchenService.integration-test.kafka-group-id`)});    
+
 const reset = function() {
     pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
                 (new class implements Pizza {name = "Meat Feast"; ingredients = ["Bacon", "Salami", "Sausage", "Anchovies"]}()),
@@ -27,13 +34,6 @@ const reset = function() {
               (new class implements Order {orderID = randomBytes(3).toString('hex'); customerName = "Real Wrong Jack"; status = OrderStatus.Ready; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }()) 
             ];
 }
-
-let kafka = new Kafka({
-    clientId: config.get(`kitchenService.integration-test.kafka-client-id`),
-    brokers: config.get(`kitchenService.messaging.kafka.brokers`)
-});
-let producer = kafka.producer();
-let consumer = kafka.consumer({groupId: config.get(`kitchenService.integration-test.kafka-group-id`)});    
 
 describe('Kitchen Service Kafka Adapter Integration Tests', () => {
 
