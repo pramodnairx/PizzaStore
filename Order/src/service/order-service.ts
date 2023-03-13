@@ -6,12 +6,26 @@ import { Kafka } from 'kafkajs';
 
 class OrderService {
 
+    private ready = false;
     private persistenceManager = PersistenceManagerFactory.getPersistenceManager();
     private kafka = new Kafka({
         clientId: config.get(`orderService.messaging.kafka.client-id`),
         brokers: config.get(`orderService.messaging.kafka.brokers`)
     });
     
+    private async init() {
+        const admin = this.kafka.admin();
+        await admin.connect();
+        if (!((await admin.listTopics()).includes(config.get(`orderService.messaging.kafka.order-topic-ack`)))) {
+            await admin.createTopics({
+                waitForLeaders: true,
+                topics: [
+                  { topic: config.get(`orderService.messaging.kafka.order-topic-ack`) },
+                ],
+              });      
+        }
+        await admin.disconnect();
+    }
 
     /**
      * 
@@ -105,6 +119,9 @@ class OrderService {
      * @returns void
      */
     public async addOrder(order: Order): Promise<void> {
+        if(!this.ready) {
+            await this.init();
+        }
         if(await this.persistenceManager.getOrder(order.orderID)) {
             let deletedOrder = await this.persistenceManager.deleteOrders([order.orderID]);
         }

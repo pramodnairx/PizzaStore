@@ -7,40 +7,36 @@ import {setTimeout} from "timers/promises";
 
 class KitchenService {
 
-    private ready = false;
+    private static ready = false;
 
-    private kafka = new Kafka({
+    private static kafka = new Kafka({
         clientId: config.get(`kitchenService.messaging.kafka.client-id`),
         brokers: config.get(`kitchenService.messaging.kafka.brokers`)
     });
 
-    async init() {
-        let consumer = this.kafka.consumer({groupId: `${config.get("kitchenService.messaging.kafka.group-id")}`});
+    static async init() {
+        let consumer = KitchenService.kafka.consumer({groupId: `${config.get("kitchenService.messaging.kafka.group-id")}`});
         await consumer.connect();
-        await consumer.subscribe({topic: `${config.get(`orderService.messaging.kafka.order-topic-ack`)}`, fromBeginning: true});
-        this.ready = true;
+        await consumer.subscribe({topic: `${config.get(`kitchenService.messaging.kafka.order-topic-ack`)}`, fromBeginning: true});
+        KitchenService.ready = true;
         await consumer.run({
             eachMessage: async ({topic, partition, message}) => {
                 console.log({
                     value: message.value?.toString(),
                 });
-                this.processOrder(message.value?.toString());
+                new KitchenService().processOrder(message.value?.toString());
             }
         });
     }
 
-    public async processOrder(orderMsg: string | undefined) {
+    private async processOrder(orderMsg: string | undefined) {
         if(orderMsg) {
             this.prepareOrder(JSON.parse(orderMsg));
         }
     }
 
-    public isReady(){
-        return this.ready;
-    }
-
     private async prepareOrder(order: Order) {
-        let msToWait = Math.random() * 1000;
+        let msToWait = Math.random() * 10000;
         logger.info(`Kitchen says the Order ${order.orderID} will take ${msToWait / 1000} seconds to prepare`);
         order.status = OrderStatus.Processing;
         
@@ -49,7 +45,7 @@ class KitchenService {
         logger.info(`Kitchen says the Order ${order.orderID} is now ready`);
         order.status = OrderStatus.Ready;
         
-        let producer = this.kafka.producer();
+        let producer = KitchenService.kafka.producer();
         await producer.connect();
         await producer.send({
             topic: config.get(`kitchenService.messaging.kafka.order-topic-ready`),
@@ -64,5 +60,7 @@ class KitchenService {
     }
 
 }
+
+KitchenService.init();
 
 export { KitchenService }

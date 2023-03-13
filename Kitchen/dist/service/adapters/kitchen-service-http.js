@@ -18,6 +18,7 @@ const express_1 = __importDefault(require("express"));
 //import { auth } from 'express-oauth2-jwt-bearer';
 const dotenv_1 = __importDefault(require("dotenv"));
 const utils_1 = require("../../util/utils");
+const kitchen_service_1 = require("../kitchen-service");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 exports.app = app;
@@ -35,6 +36,8 @@ if(config.get(`orderService.auth.jwt.useJWT`) === 'true') {
     app.use(jwtCheck);
 }
 */
+const kitchenService = new kitchen_service_1.KitchenService();
+kitchen_service_1.KitchenService.init();
 app.get('/auth', (req, res) => {
     res.send(`Secured Resource`);
 });

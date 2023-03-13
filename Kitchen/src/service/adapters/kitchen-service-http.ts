@@ -27,7 +27,7 @@ if(config.get(`orderService.auth.jwt.useJWT`) === 'true') {
 */
 
 const kitchenService = new KitchenService();
-kitchenService.init();
+KitchenService.init();
 
 app.get('/auth', (req: Request, res: Response) => {
     res.send(`Secured Resource`);
@@ -40,8 +40,6 @@ app.get('/', async (req: Request, res: Response) => {
 app.put('/order', async (req: Request, res: Response) => {
     if(!req.body) {
         res.sendStatus(400);
-    } else if (!kitchenService.isReady()) {
-        res.sendStatus(503); //Service unavailable
     } else {
         try {
             res.json(`The kitchen is closed right now`);

@@ -7,7 +7,7 @@
     "clean": "npx tsc --build --clean",
     "test": "mocha --timeout 20000 --recursive ./dist/test/*.js --exit",
     "build": "npx tsc --build --clean && npx tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/service/kitchen-service.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
   },
   "author": "Pramod Nair",

@@ -2,7 +2,7 @@ import chai from 'chai';
 import request from 'supertest';
 import axios from 'axios';
 import { app } from '../service/adapters/kitchen-service-http';
-import { Order, Pizza, Item} from '../model/order';
+import { Order, Pizza, Item, OrderStatus} from '../model/order';
 
 //let should = chai.should();
 let expect = chai.expect;
@@ -22,7 +22,7 @@ const reset = function() {
     items = [(new class implements Item{pizza = pizzas[0]; price = 18.95}()),
                 (new class implements Item{pizza = pizzas[1]; price = 22.10}())
             ];
-    orders = [(new class implements Order {orderID = "000002"; customerName = "Hungrier Jack"; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
+    orders = [(new class implements Order {orderID = "000002"; customerName = "Hungrier Jack"; status = OrderStatus.Initialized; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }())];
 }
 
 function getAuth0Token(done: Mocha.Done) {

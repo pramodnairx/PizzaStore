@@ -135,8 +135,8 @@ app.put('/order', async (req: Request, res: Response) => {
         res.sendStatus(400);
     } else {
         try {
-            const orders = await orderService.addOrder({...req.body});
-            res.json(orders);
+            let order = await orderService.addOrder({...req.body});
+            res.set('Content-Type','application/json').json(order);
         } catch (err) {
             logger.warn(`Error processing a /put Order request...`);
             logger.warn(err);

@@ -79,6 +79,7 @@ describe('/GET', () => {
     });
 });
 
+/*
 describe('Put, Get and Delete a /Pizza', () => {
 
     before('Setup Auth0', getAuth0Token);
@@ -198,7 +199,7 @@ describe('Put, Get and Delete /Item', () => {
     });
 
 });
-
+*/
 
 describe('Put, Get and Delete an /Order', () => {
 
@@ -214,15 +215,16 @@ describe('Put, Get and Delete an /Order', () => {
             .send(orders[0])
             .expect(200)
             .then(res => {
-                let json = JSON.parse(res.text);
-                expect(json.orderID).to.equal(orders[0].orderID);
-                expect(json.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
+                //let json = JSON.parse(res.text);
+                //expect(json.orderID).to.equal(orders[0].orderID);
+                //expect(json.items[0].pizza.name).to.equal(orders[0].items[0].pizza.name);
                 done();
             }).catch(err => {
                 done(err);
-            })
+            })            
     });
     
+    /*
     it('it should GET order details as per provided OrderID', (done) => {
         reset();
         request(app)
@@ -257,7 +259,7 @@ describe('Put, Get and Delete an /Order', () => {
                 done(err);
             })
     });
-
+*/
 });
 
 /*

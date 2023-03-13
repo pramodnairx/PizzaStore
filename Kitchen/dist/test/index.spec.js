@@ -7,6 +7,7 @@ const chai_1 = __importDefault(require("chai"));
 const supertest_1 = __importDefault(require("supertest"));
 const axios_1 = __importDefault(require("axios"));
 const kitchen_service_http_1 = require("../service/adapters/kitchen-service-http");
+const order_1 = require("../model/order");
 //let should = chai.should();
 let expect = chai_1.default.expect;
 let auth0Token /*: string*/ = "dummy";
@@ -45,6 +46,7 @@ const reset = function () {
             constructor() {
                 this.orderID = "000002";
                 this.customerName = "Hungrier Jack";
+                this.status = order_1.OrderStatus.Initialized;
                 this.customerAddress = "213 Hungryville 3026";
                 this.items = [items[0], items[1]];
             }

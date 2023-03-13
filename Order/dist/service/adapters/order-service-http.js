@@ -43,7 +43,7 @@ app.get('/auth', (req, res) => {
     res.send(`Secured Resource`);
 });
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send(`Welcome to the Pizza Store. Your response status was - ${res.statusCode}`);
+    res.send(`Welcome to the Pizza Store Order service. Your response status was - ${res.statusCode}`);
 }));
 app.route('/pizza/:name')
     .get((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -149,11 +149,11 @@ app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     else {
         try {
-            if (yield orderService.getOrder(req.body.orderID)) {
-                let deletedItems = (yield orderService.deleteOrder(req.body.orderID));
+            if (!orderService.isReady()) {
+                yield orderService.init();
             }
-            const orders = yield orderService.addOrder(Object.assign({}, req.body));
-            res.json(orders);
+            let order = yield orderService.addOrder(Object.assign({}, req.body));
+            res.set('Content-Type', 'application/json').json(order);
         }
         catch (err) {
             utils_1.logger.warn(`Error processing a /put Order request...`);
@@ -163,5 +163,5 @@ app.put('/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 let listener = app.listen(() => {
-    utils_1.logger.info(`Request to start Pizza store app received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
+    utils_1.logger.info(`Request to start Pizza store order service received... [${util_1.default.inspect(listener.address(), false, null, true)}]`);
 });

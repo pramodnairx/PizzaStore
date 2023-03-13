@@ -13,7 +13,7 @@
             }
         },
         "logging": {
-            "default": "info",
+            "default": "debug",
             "debug": "debug",
             "test": "verbose",
             "prod": "warn"
@@ -22,7 +22,7 @@
             "kafka": {
                 "client-id": "order-service",
                 "group-id": "PizzaStore",
-                "brokers": ["127.0.0.1:9092"],
+                "brokers": ["127.0.0.1:29092"],
                 "order-topic-ack": "ack-orders"
             }
         } 

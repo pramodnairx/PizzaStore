@@ -8,12 +8,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderService = void 0;
+const config_1 = __importDefault(require("config"));
+const order_1 = require("../model/order");
 const persistencemanager_1 = require("../db/persistencemanager");
+const kafkajs_1 = require("kafkajs");
 class OrderService {
     constructor() {
+        this.ready = false;
         this.persistenceManager = persistencemanager_1.PersistenceManagerFactory.getPersistenceManager();
+        this.kafka = new kafkajs_1.Kafka({
+            clientId: config_1.default.get(`orderService.messaging.kafka.client-id`),
+            brokers: config_1.default.get(`orderService.messaging.kafka.brokers`)
+        });
+    }
+    init() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const admin = this.kafka.admin();
+            yield admin.connect();
+            yield admin.createTopics({
+                waitForLeaders: true,
+                topics: [
+                    { topic: config_1.default.get(`orderService.messaging.kafka.order-topic-ack`) },
+                ],
+            });
+            yield admin.disconnect();
+        });
     }
     /**
      *
@@ -108,22 +132,35 @@ class OrderService {
         });
     }
     /**
-     * Deletes any existing order with the provided OrderID and adds a new one
+     * Deletes any existing order with the provided OrderID, persists the new order details
+     * and posts the saved order to Kafka acknowledged orders topic
      *
      * @param orderID
-     * @returns the saved Order as received from the backend
+     * @returns void
      */
     addOrder(order) {
         return __awaiter(this, void 0, void 0, function* () {
             if (yield this.persistenceManager.getOrder(order.orderID)) {
                 let deletedOrder = yield this.persistenceManager.deleteOrders([order.orderID]);
             }
+            order.status = order_1.OrderStatus.Acknowledged;
             let savedOrder = yield this.persistenceManager.saveOrders([order]);
             if (savedOrder.length > 0) {
-                return savedOrder[0];
+                let producer = this.kafka.producer();
+                yield producer.connect();
+                yield producer.send({
+                    topic: config_1.default.get(`orderService.messaging.kafka.order-topic-ack`),
+                    messages: [
+                        {
+                            key: savedOrder[0].orderID,
+                            value: JSON.stringify(savedOrder[0])
+                        }
+                    ]
+                });
+                yield producer.disconnect();
             }
             else {
-                throw new Error(`Error adding Order no. ${order.orderID}`);
+                throw new Error(`Error ackowledging Order no. ${order.orderID}`);
             }
         });
     }
@@ -137,6 +174,9 @@ class OrderService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.persistenceManager.deleteOrders([orderID]);
         });
+    }
+    isReady() {
+        return this.ready;
     }
 }
 exports.OrderService = OrderService;
