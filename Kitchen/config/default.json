@@ -1,8 +1,7 @@
 {
     "kitchenService": {
         "db": {
-            "provider": "MONGO_DB",
-            "connectionString": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/?retryWrites=true&w=majority"
+            "connectionString": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/kitchen?retryWrites=true&w=majority"
         },
         "auth": {
             "jwt": {
@@ -23,8 +22,7 @@
                 "client-id": "kitchen-service",
                 "group-id": "PizzaStore",
                 "brokers": ["127.0.0.1:29092"],
-                "order-topic-ack": "ack-orders",
-                "order-topic-ready": "ready-orders"
+                "orders-topic": "orders"
             }
         } 
     }

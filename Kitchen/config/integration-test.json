@@ -1,0 +1,10 @@
+{
+    "kitchenService": {
+        "integration-test": {
+            "kafka-client-id": "kitchen-service-integration-test",
+            "kafka-group-id": "kafka-kitchen-integration-test-group",
+            "result-check-timeout": 1000,
+            "result-check-max-tries": 5
+        }
+    }
+}

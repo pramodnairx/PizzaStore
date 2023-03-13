@@ -1,16 +1,17 @@
 {
-  "name": "kitchen",
+  "name": "storefront",
   "version": "1.0.0",
-  "description": "Kitchen service for the Pizza store",
-  "main": "./dist/index.js",
+  "description": "Web facing store front for the Pizza store",
+  "____________type": "module",
+  "main": "./dist/store-front.js",
   "scripts": {
     "clean": "npx tsc --build --clean",
-    "test": "export NODE_ENV=test && mocha --timeout 60000 --recursive ./dist/test/*.js --exit",
-    "integration-test": "export NODE_ENV=integration-test && mocha --timeout 60000 --recursive ./dist/test/integration-test/*.js --exit",
+    "test": "mocha --timeout 20000 --recursive ./dist/test/*.js --exit",
     "build": "npx tsc --build --clean && npx tsc",
-    "start": "node dist/service/kitchen-service-kafka.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/service/kitchen-service-kafka.js\""
+    "start": "node dist/store-front.js",
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/store-front.js\""
   },
+  "keywords": [],
   "author": "Pramod Nair",
   "license": "ISC",
   "dependencies": {
@@ -20,9 +21,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-oauth2-jwt-bearer": "^1.3.0",
-    "inversify": "^6.0.1",
     "kafkajs": "^2.2.4",
-    "reflect-metadata": "^0.1.13",
     "winston": "^3.8.2"
   },
   "devDependencies": {
