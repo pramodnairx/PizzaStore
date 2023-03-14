@@ -12,7 +12,7 @@ class KitchenService {
     public async processOrder(order: Order) : Promise<Order> {
         if(order.status === OrderStatus.Acknowledged) {
             logger.info(`Kitchen says Ack order receieved = ${JSON.stringify(order)}`);            
-            //Check for duplicates
+            //Check for duplicates processed by other Kitchen Service instances
             if (await this.persistenceManager.getOrder(order.orderID)) {
                 logger.warn(`Kitchen say Order ID ${order.orderID} is already being processed. Received a duplicate order. Ignoring.`);
             } else {

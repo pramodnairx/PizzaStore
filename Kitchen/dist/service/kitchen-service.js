@@ -22,7 +22,7 @@ class KitchenService {
         return __awaiter(this, void 0, void 0, function* () {
             if (order.status === order_1.OrderStatus.Acknowledged) {
                 utils_1.logger.info(`Kitchen says Ack order receieved = ${JSON.stringify(order)}`);
-                //Check for duplicates
+                //Check for duplicates processed by other Kitchen Service instances
                 if (yield this.persistenceManager.getOrder(order.orderID)) {
                     utils_1.logger.warn(`Kitchen say Order ID ${order.orderID} is already being processed. Received a duplicate order. Ignoring.`);
                 }

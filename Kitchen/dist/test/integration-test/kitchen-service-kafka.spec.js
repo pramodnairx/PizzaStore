@@ -24,6 +24,12 @@ let expect = chai_1.default.expect;
 let pizzas;
 let items;
 let orders;
+let kafka = new kafkajs_1.Kafka({
+    clientId: config_1.default.get(`kitchenService.integration-test.kafka-client-id`),
+    brokers: config_1.default.get(`kitchenService.messaging.kafka.brokers`)
+});
+let producer = kafka.producer();
+let consumer = kafka.consumer({ groupId: config_1.default.get(`kitchenService.integration-test.kafka-group-id`) });
 const reset = function () {
     pizzas = [(new class {
             constructor() {
@@ -72,12 +78,6 @@ const reset = function () {
         }())
     ];
 };
-let kafka = new kafkajs_1.Kafka({
-    clientId: config_1.default.get(`kitchenService.integration-test.kafka-client-id`),
-    brokers: config_1.default.get(`kitchenService.messaging.kafka.brokers`)
-});
-let producer = kafka.producer();
-let consumer = kafka.consumer({ groupId: config_1.default.get(`kitchenService.integration-test.kafka-group-id`) });
 describe('Kitchen Service Kafka Adapter Integration Tests', () => {
     let processedOrder0;
     before(() => __awaiter(void 0, void 0, void 0, function* () {

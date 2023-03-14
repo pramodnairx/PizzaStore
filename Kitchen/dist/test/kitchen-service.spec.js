@@ -26,7 +26,9 @@ let items;
 let orders;
 const orderID1 = (0, crypto_1.randomBytes)(4).toString('hex');
 const orderID2 = (0, crypto_1.randomBytes)(4).toString('hex');
+let mockPM;
 let kitchen;
+let mockDBResponses = [];
 const reset = function () {
     pizzas = [(new class {
             constructor() {
@@ -74,18 +76,18 @@ const reset = function () {
             }
         }()),
     ];
+    // Array order is 0:get, 1:save, 2:delete, 3:update 
+    mockDBResponses = [
+        new Map().set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+    ];
 };
 describe('Kitchen Service Tests', () => {
     before(() => __awaiter(void 0, void 0, void 0, function* () {
         reset();
-        // Array order is 0:get, 1:save, 2:delete, 3:update 
-        const mockDBResponses = [
-            new Map().set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-        ];
-        const mockPM = inversify_config_1.iocContainer.get(persistencemanager_1.TYPES.PersistenceManager);
+        mockPM = inversify_config_1.iocContainer.get(persistencemanager_1.TYPES.PersistenceManager);
         if (mockPM instanceof mockpersistencemanager_1.MockPersistenceManager)
             mockPM.setMockResponses(mockDBResponses);
         kitchen = new kitchen_service_1.KitchenService(mockPM);
@@ -110,6 +112,8 @@ describe('Kitchen Service Tests', () => {
         expect(order.status).equals(order_1.OrderStatus.Ready);
         expect(order.orderID).equals(orders[0].orderID);
         reset();
+        mockDBResponses[0].set(orderID1, orders[0]);
+        mockPM.setMockResponses(mockDBResponses);
         const repeatOrder = yield kitchen.processOrder(orders[0]);
         expect(repeatOrder !== null);
         expect(repeatOrder.status).equals(order_1.OrderStatus.Acknowledged);

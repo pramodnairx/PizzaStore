@@ -19,7 +19,9 @@ let orders: Order[];
 const orderID1 = randomBytes(4).toString('hex');
 const orderID2 = randomBytes(4).toString('hex');
 
+let mockPM: PersistenceManager; 
 let kitchen: KitchenService; 
+let mockDBResponses: Map<string, Order>[] = [];
 
 const reset = function() {
     pizzas = [(new class implements Pizza {name = "Margherita"; ingredients = ["Cheese and more cheese"]}()),
@@ -34,6 +36,13 @@ const reset = function() {
     orders = [(new class implements Order {orderID = orderID1; customerName = "Mock Hungrier Jack"; status = OrderStatus.Acknowledged; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }()),
               (new class implements Order {orderID = orderID2; customerName = "Mock Another Hungrier Jack"; status = OrderStatus.Acknowledged; customerAddress = "220 Hungryville 3026"; items = [items[1]] }()),
              ];
+    // Array order is 0:get, 1:save, 2:delete, 3:update 
+    mockDBResponses = [
+        new Map().set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+        new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
+    ];
 };
 
 
@@ -41,14 +50,7 @@ describe('Kitchen Service Tests', () => {
     
     before(async() => {
         reset();
-        // Array order is 0:get, 1:save, 2:delete, 3:update 
-        const mockDBResponses: Map<string, Order>[] = [
-            new Map().set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-            new Map().set(orderID1, orders[0]).set(orderID2, orders[1]),
-        ];
-        const mockPM = iocContainer.get<PersistenceManager>(TYPES.PersistenceManager);
+        mockPM = iocContainer.get<PersistenceManager>(TYPES.PersistenceManager);
         if(mockPM instanceof MockPersistenceManager)
             mockPM.setMockResponses(mockDBResponses);
         kitchen = new KitchenService(mockPM);
@@ -75,9 +77,10 @@ describe('Kitchen Service Tests', () => {
         expect(order !== null);
         expect(order.status).equals(OrderStatus.Ready);
         expect(order.orderID).equals(orders[0].orderID);
-
-        reset();
         
+        reset();
+        mockDBResponses[0].set(orderID1, orders[0]);
+        (mockPM as MockPersistenceManager).setMockResponses(mockDBResponses);        
         const repeatOrder = await kitchen.processOrder(orders[0]);
         expect(repeatOrder !== null);
         expect(repeatOrder.status).equals(OrderStatus.Acknowledged);
