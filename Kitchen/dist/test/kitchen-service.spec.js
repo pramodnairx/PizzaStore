@@ -95,7 +95,7 @@ describe('Kitchen Service Tests', () => {
     it('Prepare and return an Acknowledged Order', () => __awaiter(void 0, void 0, void 0, function* () {
         reset();
         let order = yield kitchen.processOrder(orders[0]);
-        expect(order !== null);
+        expect(order && order !== null);
         expect(order.status).equals(order_1.OrderStatus.Ready);
         expect(order.orderID).equals(orders[0].orderID);
     }));
@@ -103,20 +103,18 @@ describe('Kitchen Service Tests', () => {
         reset();
         orders[0].status = order_1.OrderStatus.Initialized;
         let order = yield kitchen.processOrder(orders[0]);
-        expect(order.status === order_1.OrderStatus.Initialized);
+        expect(!order);
     }));
     it('Ignore a duplicate Order', () => __awaiter(void 0, void 0, void 0, function* () {
         reset();
         const order = yield kitchen.processOrder(orders[0]);
-        expect(order !== null);
+        expect(order && order !== null);
         expect(order.status).equals(order_1.OrderStatus.Ready);
         expect(order.orderID).equals(orders[0].orderID);
         reset();
         mockDBResponses[0].set(orderID1, orders[0]);
         mockPM.setMockResponses(mockDBResponses);
         const repeatOrder = yield kitchen.processOrder(orders[0]);
-        expect(repeatOrder !== null);
-        expect(repeatOrder.status).equals(order_1.OrderStatus.Acknowledged);
-        expect(repeatOrder.orderID).equals(orders[0].orderID);
+        expect(!repeatOrder);
     }));
 });

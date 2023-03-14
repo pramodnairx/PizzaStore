@@ -9,7 +9,10 @@ class KitchenService {
 
     public constructor(private persistenceManager: PersistenceManager) {}
 
-    public async processOrder(order: Order) : Promise<Order> {
+    public async processOrder(order: Order) : Promise<Order | undefined> {
+        
+        let returnOrder: Order | undefined;
+
         if(order.status === OrderStatus.Acknowledged) {
             logger.info(`Kitchen says Ack order receieved = ${JSON.stringify(order)}`);            
             //Check for duplicates processed by other Kitchen Service instances
@@ -26,12 +29,13 @@ class KitchenService {
                 logger.info(`Kitchen says the Order ${order.orderID} is now ready`);
                 order.status = OrderStatus.Ready;
                 await this.persistenceManager.updateOrder(order);
+                returnOrder = order;
             }
         } else {
             logger.info(`Kitchen ignoring an Order with status ${order.status}`);
         }
 
-        return order;
+        return returnOrder;
     }
 }
 

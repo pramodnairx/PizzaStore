@@ -58,7 +58,7 @@ class KitchenServiceKafkaAdapter {
                         logger.info(`Kitchen Service Kafka Adapter processing incoming ${msgValue}`);
                         if(msgValue) {
                             let order = await this.kitchen.processOrder(JSON.parse(msgValue));
-                            if(order !== null) {
+                            if(order && order !== null) {
                                 this.orderReady(order);
                             }
                         } else {

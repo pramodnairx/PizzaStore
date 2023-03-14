@@ -128,6 +128,7 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
         expect(processedOrder0.orderID).to.equal(orders[0].orderID);
         expect(processedOrder0.status).to.equal(order_1.OrderStatus.Ready);
     }));
+    //it('Verify that a duplicate Order is not processed')
     after(() => __awaiter(void 0, void 0, void 0, function* () {
         yield producer.disconnect();
         yield consumer.disconnect();

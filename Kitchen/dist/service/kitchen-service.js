@@ -20,6 +20,7 @@ class KitchenService {
     }
     processOrder(order) {
         return __awaiter(this, void 0, void 0, function* () {
+            let returnOrder;
             if (order.status === order_1.OrderStatus.Acknowledged) {
                 utils_1.logger.info(`Kitchen says Ack order receieved = ${JSON.stringify(order)}`);
                 //Check for duplicates processed by other Kitchen Service instances
@@ -35,12 +36,13 @@ class KitchenService {
                     utils_1.logger.info(`Kitchen says the Order ${order.orderID} is now ready`);
                     order.status = order_1.OrderStatus.Ready;
                     yield this.persistenceManager.updateOrder(order);
+                    returnOrder = order;
                 }
             }
             else {
                 utils_1.logger.info(`Kitchen ignoring an Order with status ${order.status}`);
             }
-            return order;
+            return returnOrder;
         });
     }
 }

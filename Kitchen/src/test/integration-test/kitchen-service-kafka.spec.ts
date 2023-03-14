@@ -94,6 +94,8 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
         expect(processedOrder0.status).to.equal(OrderStatus.Ready);
     });
 
+    //it('Verify that a duplicate Order is not processed')
+
     after(async() => {
         await producer.disconnect();
         await consumer.disconnect();

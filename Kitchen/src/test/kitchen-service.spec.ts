@@ -59,32 +59,30 @@ describe('Kitchen Service Tests', () => {
     it('Prepare and return an Acknowledged Order', async () => {
         reset();
         let order = await kitchen.processOrder(orders[0]);
-        expect(order !== null);
-        expect(order.status).equals(OrderStatus.Ready);
-        expect(order.orderID).equals(orders[0].orderID);
+        expect(order && order !== null);
+        expect(order!.status).equals(OrderStatus.Ready);
+        expect(order!.orderID).equals(orders[0].orderID);
     });
 
     it('Ignores an Order that is not in Acknowledged status', async () => {
         reset();
         orders[0].status = OrderStatus.Initialized;
         let order = await kitchen.processOrder(orders[0]);
-        expect(order.status === OrderStatus.Initialized);
+        expect(!order);
     });
     
     it('Ignore a duplicate Order', async () => {
         reset();
         const order = await kitchen.processOrder(orders[0]);
-        expect(order !== null);
-        expect(order.status).equals(OrderStatus.Ready);
-        expect(order.orderID).equals(orders[0].orderID);
+        expect(order && order !== null);
+        expect(order!.status).equals(OrderStatus.Ready);
+        expect(order!.orderID).equals(orders[0].orderID);
         
         reset();
         mockDBResponses[0].set(orderID1, orders[0]);
         (mockPM as MockPersistenceManager).setMockResponses(mockDBResponses);        
         const repeatOrder = await kitchen.processOrder(orders[0]);
-        expect(repeatOrder !== null);
-        expect(repeatOrder.status).equals(OrderStatus.Acknowledged);
-        expect(repeatOrder.orderID).equals(orders[0].orderID);
+        expect(!repeatOrder);
     });
 
 });
