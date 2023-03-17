@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "Web facing store front for the Pizza store",
   "____________type": "module",
-  "main": "./dist/store-front.js",
+  "main": "./dist/init.js",
   "scripts": {
     "clean": "npx tsc --build --clean",
     "test": "mocha --timeout 20000 --recursive ./dist/test/*.js --exit",
     "build": "npx tsc --build --clean && npx tsc",
-    "start": "node dist/store-front.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/store-front.js\""
+    "start": "node dist/init.js",
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/init.js\""
   },
   "keywords": [],
   "author": "Pramod Nair",

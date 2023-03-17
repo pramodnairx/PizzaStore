@@ -1,7 +1,7 @@
 import config from 'config'; 
 import { Order } from '../../model/order';
 import { logger } from '../../util/utils';
-import { Kafka } from 'kafkajs';
+import { Kafka, KafkaJSNonRetriableError } from 'kafkajs';
 import { KitchenService } from '../kitchen-service';
 import { PersistenceManager, TYPES } from '../../db/persistencemanager';
 import { iocContainer } from "../../inversify.config";
@@ -14,7 +14,8 @@ class KitchenServiceKafkaAdapter {
     
     private kafka = new Kafka({
         clientId: config.get(`kitchenService.messaging.kafka.client-id`),
-        brokers: config.get(`kitchenService.messaging.kafka.brokers`)
+        brokers: config.get(`kitchenService.messaging.kafka.brokers`),
+        connectionTimeout: 20000
     });
 
     public static isInitialized() {
@@ -30,8 +31,27 @@ class KitchenServiceKafkaAdapter {
             logger.info(`Kitchen Service Kafka Adapter - DB initialized`);
 
             //@TODO : Should not be this components responsibility
+            /*
             const admin = this.kafka.admin();
-            await admin.connect();
+            let retries = 0;
+            let adminConnected = false;
+            while(!adminConnected) {
+                try {
+                    await admin.connect();
+                    adminConnected = true;
+                } catch(err) {
+                    if(err instanceof KafkaJSNonRetriableError && err.name === 'KafkaJSNumberOfRetriesExceeded') {
+                        logger.info(`Service will retry Kafka Admin connection [${10 - retries - 1}] more times`);
+                        retries++;
+                        if(retries === 10)
+                            throw err;
+                    } else {
+                        logger.info(`Service exception while Admin connect - ${err}`);
+                        throw err;
+                    }
+                }
+            }
+
             logger.info(`Kitchen Service Kafka Adapter - Kafka admin connected`);
             if (!((await admin.listTopics()).includes(config.get(`kitchenService.messaging.kafka.orders-topic`)))) {
                 await admin.createTopics({
@@ -43,7 +63,8 @@ class KitchenServiceKafkaAdapter {
                 logger.info(`Kitchen Service Kafka Adapter created topic ${config.get(`kitchenService.messaging.kafka.orders-topic`)}`);
             }
             await admin.disconnect();
-    
+            */
+
             let consumer = this.kafka.consumer({groupId: 
                             `${config.get("kitchenService.messaging.kafka.group-id")}`});
             await consumer.connect();

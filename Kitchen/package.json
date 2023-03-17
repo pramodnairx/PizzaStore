@@ -8,7 +8,7 @@
     "test": "export NODE_ENV=test && mocha --timeout 60000 --recursive ./dist/test/*.js --exit",
     "integration-test": "export NODE_ENV=integration-test && mocha --timeout 60000 --recursive ./dist/test/integration-test/*.js --exit",
     "build": "npx tsc --build --clean && npx tsc",
-    "start": "node dist/service/kitchen-service-kafka.js",
+    "start": "node dist/service/adapters/kitchen-service-kafka.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/service/kitchen-service-kafka.js\""
   },
   "author": "Pramod Nair",

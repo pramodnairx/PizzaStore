@@ -1,10 +1,26 @@
 version: '2'
 services:
+  kitchen-service:
+    image: kitchen:latest
+    depends_on:
+      - storefront
+    networks:
+      - event-network
+  
+  storefront:
+    image: storefront:latest
+    depends_on:
+      - kafka
+    networks:
+      - event-network
+
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - event-network
     ports:
       - 22181:2181
 
@@ -12,6 +28,8 @@ services:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
+    networks:
+      - event-network
     ports:
       - 29092:29092
     environment:
@@ -21,3 +39,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    
+networks:
+  event-network: {}

@@ -23,7 +23,8 @@ class KitchenServiceKafkaAdapter {
     constructor() {
         this.kafka = new kafkajs_1.Kafka({
             clientId: config_1.default.get(`kitchenService.messaging.kafka.client-id`),
-            brokers: config_1.default.get(`kitchenService.messaging.kafka.brokers`)
+            brokers: config_1.default.get(`kitchenService.messaging.kafka.brokers`),
+            connectionTimeout: 20000
         });
     }
     static isInitialized() {
@@ -37,19 +38,39 @@ class KitchenServiceKafkaAdapter {
                 this.kitchen = new kitchen_service_1.KitchenService(pm);
                 utils_1.logger.info(`Kitchen Service Kafka Adapter - DB initialized`);
                 //@TODO : Should not be this components responsibility
+                /*
                 const admin = this.kafka.admin();
-                yield admin.connect();
-                utils_1.logger.info(`Kitchen Service Kafka Adapter - Kafka admin connected`);
-                if (!((yield admin.listTopics()).includes(config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)))) {
-                    yield admin.createTopics({
+                let retries = 0;
+                let adminConnected = false;
+                while(!adminConnected) {
+                    try {
+                        await admin.connect();
+                        adminConnected = true;
+                    } catch(err) {
+                        if(err instanceof KafkaJSNonRetriableError && err.name === 'KafkaJSNumberOfRetriesExceeded') {
+                            logger.info(`Service will retry Kafka Admin connection [${10 - retries - 1}] more times`);
+                            retries++;
+                            if(retries === 10)
+                                throw err;
+                        } else {
+                            logger.info(`Service exception while Admin connect - ${err}`);
+                            throw err;
+                        }
+                    }
+                }
+    
+                logger.info(`Kitchen Service Kafka Adapter - Kafka admin connected`);
+                if (!((await admin.listTopics()).includes(config.get(`kitchenService.messaging.kafka.orders-topic`)))) {
+                    await admin.createTopics({
                         waitForLeaders: true,
                         topics: [
-                            { topic: config_1.default.get(`kitchenService.messaging.kafka.orders-topic`) },
+                          { topic: config.get(`kitchenService.messaging.kafka.orders-topic`) },
                         ],
-                    });
-                    utils_1.logger.info(`Kitchen Service Kafka Adapter created topic ${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`);
+                      });
+                    logger.info(`Kitchen Service Kafka Adapter created topic ${config.get(`kitchenService.messaging.kafka.orders-topic`)}`);
                 }
-                yield admin.disconnect();
+                await admin.disconnect();
+                */
                 let consumer = this.kafka.consumer({ groupId: `${config_1.default.get("kitchenService.messaging.kafka.group-id")}` });
                 yield consumer.connect();
                 yield consumer.subscribe({ topic: `${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true });
