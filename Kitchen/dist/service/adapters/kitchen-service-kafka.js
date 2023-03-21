@@ -27,6 +27,33 @@ class KitchenServiceKafkaAdapter {
             connectionTimeout: 20000
         });
     }
+    setupForCleanShutdown(consumer) {
+        const errorTypes = ['unhandledRejection', 'uncaughtException'];
+        const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+        errorTypes.map(type => {
+            process.on(type, (e) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    console.log(`process.on ${type}`);
+                    console.error(e);
+                    yield consumer.disconnect();
+                    process.exit(0);
+                }
+                catch (_) {
+                    process.exit(1);
+                }
+            }));
+        });
+        signalTraps.map(type => {
+            process.once(type, () => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    yield consumer.disconnect();
+                }
+                finally {
+                    process.kill(process.pid, type);
+                }
+            }));
+        });
+    }
     static isInitialized() {
         return KitchenServiceKafkaAdapter.initialized;
     }
@@ -37,41 +64,8 @@ class KitchenServiceKafkaAdapter {
                 const pm = inversify_config_1.iocContainer.get(persistencemanager_1.TYPES.PersistenceManager);
                 this.kitchen = new kitchen_service_1.KitchenService(pm);
                 utils_1.logger.info(`Kitchen Service Kafka Adapter - DB initialized`);
-                //@TODO : Should not be this components responsibility
-                /*
-                const admin = this.kafka.admin();
-                let retries = 0;
-                let adminConnected = false;
-                while(!adminConnected) {
-                    try {
-                        await admin.connect();
-                        adminConnected = true;
-                    } catch(err) {
-                        if(err instanceof KafkaJSNonRetriableError && err.name === 'KafkaJSNumberOfRetriesExceeded') {
-                            logger.info(`Service will retry Kafka Admin connection [${10 - retries - 1}] more times`);
-                            retries++;
-                            if(retries === 10)
-                                throw err;
-                        } else {
-                            logger.info(`Service exception while Admin connect - ${err}`);
-                            throw err;
-                        }
-                    }
-                }
-    
-                logger.info(`Kitchen Service Kafka Adapter - Kafka admin connected`);
-                if (!((await admin.listTopics()).includes(config.get(`kitchenService.messaging.kafka.orders-topic`)))) {
-                    await admin.createTopics({
-                        waitForLeaders: true,
-                        topics: [
-                          { topic: config.get(`kitchenService.messaging.kafka.orders-topic`) },
-                        ],
-                      });
-                    logger.info(`Kitchen Service Kafka Adapter created topic ${config.get(`kitchenService.messaging.kafka.orders-topic`)}`);
-                }
-                await admin.disconnect();
-                */
                 let consumer = this.kafka.consumer({ groupId: `${config_1.default.get("kitchenService.messaging.kafka.group-id")}` });
+                this.setupForCleanShutdown(consumer);
                 yield consumer.connect();
                 yield consumer.subscribe({ topic: `${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true });
                 utils_1.logger.info(`Kitchen Service Kafka Adapter subscribed to topic`);

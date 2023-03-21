@@ -1,7 +1,7 @@
 import config from 'config'; 
 import { Order } from '../../model/order';
 import { logger } from '../../util/utils';
-import { Kafka, KafkaJSNonRetriableError } from 'kafkajs';
+import { Consumer, Kafka, KafkaJSNonRetriableError } from 'kafkajs';
 import { KitchenService } from '../kitchen-service';
 import { PersistenceManager, TYPES } from '../../db/persistencemanager';
 import { iocContainer } from "../../inversify.config";
@@ -18,6 +18,38 @@ class KitchenServiceKafkaAdapter {
         connectionTimeout: 20000
     });
 
+    /**
+     * see https://medium.com/@curtis.porter/graceful-termination-of-kafkajs-client-processes-b05dd185759d
+     * @param consumer kafkajs consumer
+     */
+    private setupForCleanShutdown(consumer: Consumer) {
+        const errorTypes = ['unhandledRejection', 'uncaughtException']
+        const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2']
+        
+        errorTypes.map(type => {
+          process.on(type, async e => {
+            try {
+              logger.info(`process.on ${type}`);
+              logger.warn(e);
+              await consumer.disconnect();
+              process.exit(0);
+            } catch (_) {
+              process.exit(1);
+            }
+          })
+        })
+        
+        signalTraps.map(type => {
+          process.once(type, async () => {
+            try {
+              await consumer.disconnect();console.error
+            } finally {
+              process.kill(process.pid, type);
+            }
+          })
+        })        
+    }
+
     public static isInitialized() {
         return KitchenServiceKafkaAdapter.initialized;
     }
@@ -30,43 +62,9 @@ class KitchenServiceKafkaAdapter {
             this.kitchen = new KitchenService(pm);
             logger.info(`Kitchen Service Kafka Adapter - DB initialized`);
 
-            //@TODO : Should not be this components responsibility
-            /*
-            const admin = this.kafka.admin();
-            let retries = 0;
-            let adminConnected = false;
-            while(!adminConnected) {
-                try {
-                    await admin.connect();
-                    adminConnected = true;
-                } catch(err) {
-                    if(err instanceof KafkaJSNonRetriableError && err.name === 'KafkaJSNumberOfRetriesExceeded') {
-                        logger.info(`Service will retry Kafka Admin connection [${10 - retries - 1}] more times`);
-                        retries++;
-                        if(retries === 10)
-                            throw err;
-                    } else {
-                        logger.info(`Service exception while Admin connect - ${err}`);
-                        throw err;
-                    }
-                }
-            }
-
-            logger.info(`Kitchen Service Kafka Adapter - Kafka admin connected`);
-            if (!((await admin.listTopics()).includes(config.get(`kitchenService.messaging.kafka.orders-topic`)))) {
-                await admin.createTopics({
-                    waitForLeaders: true,
-                    topics: [
-                      { topic: config.get(`kitchenService.messaging.kafka.orders-topic`) },
-                    ],
-                  });
-                logger.info(`Kitchen Service Kafka Adapter created topic ${config.get(`kitchenService.messaging.kafka.orders-topic`)}`);
-            }
-            await admin.disconnect();
-            */
-
             let consumer = this.kafka.consumer({groupId: 
                             `${config.get("kitchenService.messaging.kafka.group-id")}`});
+            this.setupForCleanShutdown(consumer);
             await consumer.connect();
             await consumer.subscribe({topic: `${config.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true});
 
