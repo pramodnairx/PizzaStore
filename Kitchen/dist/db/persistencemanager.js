@@ -28,7 +28,7 @@ const TYPES = {
 exports.TYPES = TYPES;
 let MongoDBPersistenceManager = class MongoDBPersistenceManager {
     constructor() {
-        this._storeDBModel = new PizzaStoreMongoDBModel_1.PizzaStoreMongoDBModel();
+        this._storeDBModel = new PizzaStoreMongoDBModel_1.KitchenMongoDBModel();
     }
     getOrder(orderID) {
         return __awaiter(this, void 0, void 0, function* () {

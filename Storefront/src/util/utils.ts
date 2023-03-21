@@ -2,7 +2,7 @@ import winston from 'winston';
 import config from 'config';
 
 const logger = winston.createLogger({
-    level: `${config.get('orderService.logging.default')}`,
+    level: `${config.get('storefront.logging.default')}`,
     format: winston.format.json(),
     //defaultMeta: { service: 'user-service' },
     transports: [

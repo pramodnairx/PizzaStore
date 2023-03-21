@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import 'reflect-metadata';
 import { Order } from "../model/order";
-import { PizzaStoreMongoDBModel } from "./PizzaStoreMongoDBModel"; 
+import { KitchenMongoDBModel } from "./PizzaStoreMongoDBModel"; 
 import config from 'config';
 
 interface PersistenceManager {    
@@ -18,10 +18,10 @@ const TYPES = {
 @injectable()
 class MongoDBPersistenceManager implements PersistenceManager {
 
-    private _storeDBModel: PizzaStoreMongoDBModel;
+    private _storeDBModel: KitchenMongoDBModel;
 
     constructor(){
-        this._storeDBModel = new PizzaStoreMongoDBModel();
+        this._storeDBModel = new KitchenMongoDBModel();
     }
 
     async getOrder(orderID: string): Promise<Order | null> {

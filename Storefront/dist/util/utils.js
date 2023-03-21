@@ -7,7 +7,7 @@ exports.logger = void 0;
 const winston_1 = __importDefault(require("winston"));
 const config_1 = __importDefault(require("config"));
 const logger = winston_1.default.createLogger({
-    level: `${config_1.default.get('orderService.logging.default')}`,
+    level: `${config_1.default.get('storefront.logging.default')}`,
     format: winston_1.default.format.json(),
     //defaultMeta: { service: 'user-service' },
     transports: [

@@ -3,7 +3,7 @@ import mongoose, { Schema } from 'mongoose';
 import config from 'config';
 import { logger } from '../util/utils';
 
-class PizzaStoreMongoDBModel {
+class KitchenMongoDBModel {
     
     private connected = false;
 
@@ -73,4 +73,4 @@ class PizzaStoreMongoDBModel {
 
 }
 
-export { PizzaStoreMongoDBModel };
+export { KitchenMongoDBModel };

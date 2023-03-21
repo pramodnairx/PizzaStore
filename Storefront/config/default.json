@@ -1,7 +1,7 @@
 {
     "storefront": {
         "db": {
-            "connectionString": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/kitchen?retryWrites=true&w=majority"
+            "connectionString_temp": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/kitchen?retryWrites=true&w=majority"
         },
         "logging": {
             "default": "info",

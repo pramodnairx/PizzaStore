@@ -35,11 +35,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PizzaStoreMongoDBModel = void 0;
+exports.KitchenMongoDBModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const config_1 = __importDefault(require("config"));
 const utils_1 = require("../util/utils");
-class PizzaStoreMongoDBModel {
+class KitchenMongoDBModel {
     constructor() {
         this.connected = false;
         this.pizzaSchema = new mongoose_1.Schema({
@@ -104,4 +104,4 @@ class PizzaStoreMongoDBModel {
         });
     }
 }
-exports.PizzaStoreMongoDBModel = PizzaStoreMongoDBModel;
+exports.KitchenMongoDBModel = KitchenMongoDBModel;

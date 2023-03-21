@@ -19,8 +19,8 @@ const kafkajs_1 = require("kafkajs");
 class StoreFrontInit {
     constructor() {
         this.kafka = new kafkajs_1.Kafka({
-            clientId: config_1.default.get(`kitchenService.messaging.kafka.client-id`),
-            brokers: config_1.default.get(`kitchenService.messaging.kafka.brokers`)
+            clientId: config_1.default.get(`storefront.messaging.kafka.client-id`),
+            brokers: config_1.default.get(`storefront.messaging.kafka.brokers`)
         });
     }
     static isInitialized() {
@@ -52,14 +52,14 @@ class StoreFrontInit {
                     }
                 }
                 utils_1.logger.info(`Store Front Service Kafka Adapter - Kafka admin connected`);
-                if (!((yield admin.listTopics()).includes(config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)))) {
+                if (!((yield admin.listTopics()).includes(config_1.default.get(`storefront.messaging.kafka.orders-topic`)))) {
                     yield admin.createTopics({
                         waitForLeaders: true,
                         topics: [
-                            { topic: config_1.default.get(`kitchenService.messaging.kafka.orders-topic`) },
+                            { topic: config_1.default.get(`storefront.messaging.kafka.orders-topic`) },
                         ],
                     });
-                    utils_1.logger.info(`Store Front Service Kafka Adapter created topic ${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`);
+                    utils_1.logger.info(`Store Front Service Kafka Adapter created topic ${config_1.default.get(`storefront.messaging.kafka.orders-topic`)}`);
                 }
                 yield admin.disconnect();
                 StoreFrontInit.initialized = true;

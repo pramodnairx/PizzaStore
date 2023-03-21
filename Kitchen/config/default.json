@@ -1,7 +1,8 @@
 {
     "kitchenService": {
         "db": {
-            "connectionString": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/kitchen?retryWrites=true&w=majority"
+            "connectionString-atlas": "mongodb+srv://skywalker:EenieMynie8080@bazinga.zwxlq0g.mongodb.net/kitchen?retryWrites=true&w=majority",
+            "connectionString": "mongodb://kitchen-svc:kitchen-svc-pwd@mongodb_container:27017/kitchen?retryWrites=true&w=majority"
         },
         "auth": {
             "jwt": {
