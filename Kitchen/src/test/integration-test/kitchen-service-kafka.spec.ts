@@ -1,12 +1,12 @@
 import { malabi, MalabiSpan} from 'malabi';
 import { SpanKind } from '@opentelemetry/api';
+import { EachMessageHandler, Kafka, Message } from 'kafkajs';
+import { setTimeout } from 'timers/promises';
+import { randomBytes } from 'crypto';
 import chai from 'chai';
 import { Order, Pizza, Item, OrderStatus} from '../../model/order';
 import config from 'config';
-import { Kafka } from 'kafkajs';
 import { logger } from '../../util/utils';
-import { setTimeout } from 'timers/promises';
-import { randomBytes } from 'crypto';
 import { KitchenServiceKafkaAdapter } from '../../service/adapters/kitchen-service-kafka';
 
 
@@ -45,65 +45,46 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
     it('Verify an Acknowledged Order is prepared', async () => {
         reset();
         const telemetryRepo = await malabi(async() => {
-            await producer.connect();
-            await consumer.connect();
-    
-            await consumer.subscribe({topic: `${config.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true});
-            logger.info(`Integration test : Subscribed to Orders Topic`);
-            await consumer.run({
-                eachMessage: async ({topic, partition, message}) => {
-                        let msgValue = message.value?.toString();
-                        logger.info(`Integration test : message received - ${msgValue}`);
-                        if(msgValue) {
-                            let order = JSON.parse(msgValue);
-                            if (order.status === OrderStatus.Ready && order.orderID === orders[0].orderID) {
-                                processedOrder0 = order;
-                            } 
-                        }
-                    },
-            });
-    
-            while(!KitchenServiceKafkaAdapter.isInitialized()) {
-                logger.info("Waiting...");
-                await setTimeout(config.get('kitchenService.integration-test.result-check-timeout'));   
-            }
-    
-            await producer.send({
-                topic: config.get(`kitchenService.messaging.kafka.orders-topic`),
-                messages: [
-                    {
-                        key: orders[0].orderID,
-                        value: JSON.stringify(orders[0])
+            await setupProducerAndConsumer(config.get(`kitchenService.messaging.kafka.orders-topic`), 
+                async ({topic, partition, message}) => {
+                    let msgValue = message.value?.toString();
+                    logger.info(`Integration test : message received - ${msgValue}`);
+                    if(msgValue) {
+                        let order = JSON.parse(msgValue);
+                        if (order.status === OrderStatus.Ready && order.orderID === orders[0].orderID) {
+                            processedOrder0 = order;
+                        } 
                     }
-                ]
-            });
-            logger.info(`Integration test : ACK Order sent.`);
-            
+            });            
+            await sendMessage(config.get(`kitchenService.messaging.kafka.orders-topic`), 
+                                [
+                                    {
+                                        key: orders[0].orderID,
+                                        value: JSON.stringify(orders[0])
+                                    }
+                                ]
+            );            
             await resultReady(() => {
-                if(processedOrder0)
-                    return true;
-                else
-                    return false;
-            }, 
-            config.get(`kitchenService.integration-test.result-check-timeout`), 
-            config.get(`kitchenService.integration-test.result-check-max-tries`));
-            logger.info(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder0)}`);
-            
-            await producer.disconnect();
-            await consumer.disconnect();
-            logger.info(`Producer and Consumer disconnected`);                
+                    if(processedOrder0)
+                        return true;
+                    else
+                        return false;
+                }, 
+                config.get(`kitchenService.integration-test.result-check-timeout`), 
+                config.get(`kitchenService.integration-test.result-check-max-tries`));
+                logger.info(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder0)}`
+            );            
+            await tearDownProducerAndConsumer();   
         });
 
         const allSpans = telemetryRepo.spans.all;
-
         const kafkaPublishSpans = allSpans.filter((span: MalabiSpan, index) => {
             return (span.messagingSystem 
                     && span.messagingSystem === 'kafka')
                     && span.queueOrTopicName === 'orders' 
                     && span.messagingDestinationKind === 'topic' 
-                    && span.kind === 3;
+                    && span.kind === SpanKind.PRODUCER;
         });
-
         const mongoSpans = allSpans.filter((span: MalabiSpan, index) => {
             return span.mongoCollection; 
         });
@@ -126,7 +107,6 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
         expect(publishedOrder1).to.be.not.null;
         expect(publishedOrder1.orderID).to.equal(orders[0].orderID);
         expect(publishedOrder1.status).to.equal(OrderStatus.Ready);
-
     });
 
     async function resultReady(predicate: (a:void) => boolean, timeout: number, maxTries: number) : Promise<boolean> {
@@ -139,3 +119,30 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
     }
 });
 
+async function setupProducerAndConsumer(topic: string, consMsgRecvdCallback: EachMessageHandler) {
+    await producer.connect();
+    await consumer.connect();
+    await consumer.subscribe({topic: topic, fromBeginning: true});
+    logger.info(`Integration test : Subscribed to Orders Topic`);
+    await consumer.run({
+        eachMessage: consMsgRecvdCallback,
+    });
+
+    while(!KitchenServiceKafkaAdapter.isInitialized()) {
+        logger.info("Waiting...");
+        await setTimeout(config.get('kitchenService.integration-test.result-check-timeout'));   
+    }
+}
+
+async function sendMessage(topic: string, messages: Message[]) {
+    await producer.send({
+        topic: topic,
+        messages: messages
+    });
+}
+
+async function tearDownProducerAndConsumer() {
+    await producer.disconnect();
+    await consumer.disconnect();
+    logger.info(`Producer and Consumer disconnected`);               
+}

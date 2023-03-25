@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const malabi_1 = require("malabi");
+const api_1 = require("@opentelemetry/api");
 const chai_1 = __importDefault(require("chai"));
 const order_1 = require("../../model/order");
 const config_1 = __importDefault(require("config"));
@@ -21,11 +22,6 @@ const utils_1 = require("../../util/utils");
 const promises_1 = require("timers/promises");
 const crypto_1 = require("crypto");
 const kitchen_service_kafka_1 = require("../../service/adapters/kitchen-service-kafka");
-/*
-instrument({
-    serviceName: 'kitchen-service-integration-test',
-});
-*/
 let expect = chai_1.default.expect;
 let pizzas;
 let items;
@@ -89,40 +85,23 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
     it('Verify an Acknowledged Order is prepared', () => __awaiter(void 0, void 0, void 0, function* () {
         reset();
         const telemetryRepo = yield (0, malabi_1.malabi)(() => __awaiter(void 0, void 0, void 0, function* () {
-            yield producer.connect();
-            yield consumer.connect();
-            yield consumer.subscribe({ topic: `${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true });
-            utils_1.logger.info(`Integration test : Subscribed to Orders Topic`);
-            yield consumer.run({
-                eachMessage: ({ topic, partition, message }) => __awaiter(void 0, void 0, void 0, function* () {
-                    var _a;
-                    let msgValue = (_a = message.value) === null || _a === void 0 ? void 0 : _a.toString();
-                    utils_1.logger.info(`Integration test : message received - ${msgValue}`);
-                    if (msgValue) {
-                        let order = JSON.parse(msgValue);
-                        if (order.status === order_1.OrderStatus.Ready && order.orderID === orders[0].orderID) {
-                            processedOrder0 = order;
-                        }
+            yield setupProducerAndConsumer(config_1.default.get(`kitchenService.messaging.kafka.orders-topic`), ({ topic, partition, message }) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
+                let msgValue = (_a = message.value) === null || _a === void 0 ? void 0 : _a.toString();
+                utils_1.logger.info(`Integration test : message received - ${msgValue}`);
+                if (msgValue) {
+                    let order = JSON.parse(msgValue);
+                    if (order.status === order_1.OrderStatus.Ready && order.orderID === orders[0].orderID) {
+                        processedOrder0 = order;
                     }
-                    else {
-                        //Ignore maybe?
-                    }
-                }),
-            });
-            while (!kitchen_service_kafka_1.KitchenServiceKafkaAdapter.isInitialized()) {
-                utils_1.logger.info("Waiting...");
-                yield (0, promises_1.setTimeout)(config_1.default.get('kitchenService.integration-test.result-check-timeout'));
-            }
-            yield producer.send({
-                topic: config_1.default.get(`kitchenService.messaging.kafka.orders-topic`),
-                messages: [
-                    {
-                        key: orders[0].orderID,
-                        value: JSON.stringify(orders[0])
-                    }
-                ]
-            });
-            utils_1.logger.info(`Integration test : ACK Order sent.`);
+                }
+            }));
+            yield sendMessage(config_1.default.get(`kitchenService.messaging.kafka.orders-topic`), [
+                {
+                    key: orders[0].orderID,
+                    value: JSON.stringify(orders[0])
+                }
+            ]);
             yield resultReady(() => {
                 if (processedOrder0)
                     return true;
@@ -130,9 +109,7 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
                     return false;
             }, config_1.default.get(`kitchenService.integration-test.result-check-timeout`), config_1.default.get(`kitchenService.integration-test.result-check-max-tries`));
             utils_1.logger.info(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder0)}`);
-            yield producer.disconnect();
-            yield consumer.disconnect();
-            utils_1.logger.info(`Producer and Consumer disconnected`);
+            yield tearDownProducerAndConsumer();
         }));
         const allSpans = telemetryRepo.spans.all;
         const kafkaPublishSpans = allSpans.filter((span, index) => {
@@ -140,7 +117,7 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
                 && span.messagingSystem === 'kafka')
                 && span.queueOrTopicName === 'orders'
                 && span.messagingDestinationKind === 'topic'
-                && span.kind === 3;
+                && span.kind === api_1.SpanKind.PRODUCER;
         });
         const mongoSpans = allSpans.filter((span, index) => {
             return span.mongoCollection;
@@ -173,3 +150,33 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
         });
     }
 });
+function setupProducerAndConsumer(topic, consMsgRecvdCallback) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield producer.connect();
+        yield consumer.connect();
+        yield consumer.subscribe({ topic: topic, fromBeginning: true });
+        utils_1.logger.info(`Integration test : Subscribed to Orders Topic`);
+        yield consumer.run({
+            eachMessage: consMsgRecvdCallback,
+        });
+        while (!kitchen_service_kafka_1.KitchenServiceKafkaAdapter.isInitialized()) {
+            utils_1.logger.info("Waiting...");
+            yield (0, promises_1.setTimeout)(config_1.default.get('kitchenService.integration-test.result-check-timeout'));
+        }
+    });
+}
+function sendMessage(topic, messages) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield producer.send({
+            topic: topic,
+            messages: messages
+        });
+    });
+}
+function tearDownProducerAndConsumer() {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield producer.disconnect();
+        yield consumer.disconnect();
+        utils_1.logger.info(`Producer and Consumer disconnected`);
+    });
+}
