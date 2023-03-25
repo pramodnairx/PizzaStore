@@ -1,10 +1,15 @@
+import { instrument, serveMalabiFromHttpApp } from 'malabi';
 import config from 'config'; 
+import { Consumer, Kafka, KafkaJSNonRetriableError } from 'kafkajs';
 import { Order } from '../../model/order';
 import { logger } from '../../util/utils';
-import { Consumer, Kafka, KafkaJSNonRetriableError } from 'kafkajs';
 import { KitchenService } from '../kitchen-service';
 import { PersistenceManager, TYPES } from '../../db/persistencemanager';
 import { iocContainer } from "../../inversify.config";
+
+const instrumentationConfig = {
+    serviceName: 'kitchen-service',
+}
 
 class KitchenServiceKafkaAdapter {
 
@@ -20,6 +25,7 @@ class KitchenServiceKafkaAdapter {
 
     /**
      * see https://medium.com/@curtis.porter/graceful-termination-of-kafkajs-client-processes-b05dd185759d
+     * however, jaeger seems to be messing this up
      * @param consumer kafkajs consumer
      */
     private setupForCleanShutdown(consumer: Consumer) {
@@ -64,7 +70,7 @@ class KitchenServiceKafkaAdapter {
 
             let consumer = this.kafka.consumer({groupId: 
                             `${config.get("kitchenService.messaging.kafka.group-id")}`});
-            this.setupForCleanShutdown(consumer);
+            //this.setupForCleanShutdown(consumer);
             await consumer.connect();
             await consumer.subscribe({topic: `${config.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true});
 
@@ -114,6 +120,10 @@ class KitchenServiceKafkaAdapter {
     }
 
 }
+
+instrument(instrumentationConfig);
+serveMalabiFromHttpApp(18393 //config.get(`kitchenService.instrumentation.malabi-port`)
+                        , instrumentationConfig);
 
 new KitchenServiceKafkaAdapter().init();
 

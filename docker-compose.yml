@@ -8,6 +8,8 @@ services:
       - mongodb_container
     networks:
       - event-network
+    ports:
+      - 18393:18393
   
   storefront:
     image: storefront:latest
@@ -54,7 +56,18 @@ services:
     volumes:
       - mongodb_data_container:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - event-network
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "6832:6832"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=warn
     networks:
       - event-network
 

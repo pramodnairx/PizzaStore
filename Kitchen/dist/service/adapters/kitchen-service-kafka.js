@@ -13,12 +13,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KitchenServiceKafkaAdapter = void 0;
+const malabi_1 = require("malabi");
 const config_1 = __importDefault(require("config"));
-const utils_1 = require("../../util/utils");
 const kafkajs_1 = require("kafkajs");
+const utils_1 = require("../../util/utils");
 const kitchen_service_1 = require("../kitchen-service");
 const persistencemanager_1 = require("../../db/persistencemanager");
 const inversify_config_1 = require("../../inversify.config");
+const instrumentationConfig = {
+    serviceName: 'kitchen-service',
+};
 class KitchenServiceKafkaAdapter {
     constructor() {
         this.kafka = new kafkajs_1.Kafka({
@@ -27,14 +31,19 @@ class KitchenServiceKafkaAdapter {
             connectionTimeout: 20000
         });
     }
+    /**
+     * see https://medium.com/@curtis.porter/graceful-termination-of-kafkajs-client-processes-b05dd185759d
+     * however, jaeger seems to be messing this up
+     * @param consumer kafkajs consumer
+     */
     setupForCleanShutdown(consumer) {
         const errorTypes = ['unhandledRejection', 'uncaughtException'];
         const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
         errorTypes.map(type => {
             process.on(type, (e) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    console.log(`process.on ${type}`);
-                    console.error(e);
+                    utils_1.logger.info(`process.on ${type}`);
+                    utils_1.logger.warn(e);
                     yield consumer.disconnect();
                     process.exit(0);
                 }
@@ -47,6 +56,7 @@ class KitchenServiceKafkaAdapter {
             process.once(type, () => __awaiter(this, void 0, void 0, function* () {
                 try {
                     yield consumer.disconnect();
+                    console.error;
                 }
                 finally {
                     process.kill(process.pid, type);
@@ -65,7 +75,7 @@ class KitchenServiceKafkaAdapter {
                 this.kitchen = new kitchen_service_1.KitchenService(pm);
                 utils_1.logger.info(`Kitchen Service Kafka Adapter - DB initialized`);
                 let consumer = this.kafka.consumer({ groupId: `${config_1.default.get("kitchenService.messaging.kafka.group-id")}` });
-                this.setupForCleanShutdown(consumer);
+                //this.setupForCleanShutdown(consumer);
                 yield consumer.connect();
                 yield consumer.subscribe({ topic: `${config_1.default.get(`kitchenService.messaging.kafka.orders-topic`)}`, fromBeginning: true });
                 utils_1.logger.info(`Kitchen Service Kafka Adapter subscribed to topic`);
@@ -118,4 +128,7 @@ class KitchenServiceKafkaAdapter {
 }
 exports.KitchenServiceKafkaAdapter = KitchenServiceKafkaAdapter;
 KitchenServiceKafkaAdapter.initialized = false;
+(0, malabi_1.instrument)(instrumentationConfig);
+(0, malabi_1.serveMalabiFromHttpApp)(18393 //config.get(`kitchenService.instrumentation.malabi-port`)
+, instrumentationConfig);
 new KitchenServiceKafkaAdapter().init();
