@@ -2,7 +2,7 @@ import config from 'config';
 import { logger } from './util/utils';
 import { Kafka, KafkaJSNonRetriableError } from 'kafkajs';
 
-class StoreFrontInit {
+class StoreFront {
 
     private static initialized = false;
     
@@ -12,11 +12,11 @@ class StoreFrontInit {
     });
 
     public static isInitialized() {
-        return StoreFrontInit.initialized;
+        return StoreFront.initialized;
     }
 
     public async init() {
-        if(!StoreFrontInit.isInitialized()) {
+        if(!StoreFront.isInitialized()) {
             logger.info(`Pizza Store Front Service Kafka Adapter being initialized`);
 
             const admin = this.kafka.admin();
@@ -51,7 +51,7 @@ class StoreFrontInit {
             }
             await admin.disconnect();
     
-            StoreFrontInit.initialized = true;
+            StoreFront.initialized = true;
 
         } else {
             logger.warn(`Request to re-initialize Store Front Service Kafka Adapter. Ignored. Check code flow.`);
@@ -59,6 +59,6 @@ class StoreFrontInit {
     }
 }
 
-new StoreFrontInit().init();
+new StoreFront().init();
 
-export { StoreFrontInit as StoreFrontService }
+export { StoreFront as StoreFrontService }

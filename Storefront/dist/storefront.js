@@ -16,7 +16,7 @@ exports.StoreFrontService = void 0;
 const config_1 = __importDefault(require("config"));
 const utils_1 = require("./util/utils");
 const kafkajs_1 = require("kafkajs");
-class StoreFrontInit {
+class StoreFront {
     constructor() {
         this.kafka = new kafkajs_1.Kafka({
             clientId: config_1.default.get(`storefront.messaging.kafka.client-id`),
@@ -24,11 +24,11 @@ class StoreFrontInit {
         });
     }
     static isInitialized() {
-        return StoreFrontInit.initialized;
+        return StoreFront.initialized;
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!StoreFrontInit.isInitialized()) {
+            if (!StoreFront.isInitialized()) {
                 utils_1.logger.info(`Pizza Store Front Service Kafka Adapter being initialized`);
                 const admin = this.kafka.admin();
                 let retries = 0;
@@ -62,7 +62,7 @@ class StoreFrontInit {
                     utils_1.logger.info(`Store Front Service Kafka Adapter created topic ${config_1.default.get(`storefront.messaging.kafka.orders-topic`)}`);
                 }
                 yield admin.disconnect();
-                StoreFrontInit.initialized = true;
+                StoreFront.initialized = true;
             }
             else {
                 utils_1.logger.warn(`Request to re-initialize Store Front Service Kafka Adapter. Ignored. Check code flow.`);
@@ -70,6 +70,6 @@ class StoreFrontInit {
         });
     }
 }
-exports.StoreFrontService = StoreFrontInit;
-StoreFrontInit.initialized = false;
-new StoreFrontInit().init();
+exports.StoreFrontService = StoreFront;
+StoreFront.initialized = false;
+new StoreFront().init();
