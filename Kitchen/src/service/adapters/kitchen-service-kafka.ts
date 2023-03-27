@@ -87,7 +87,7 @@ class KitchenServiceKafkaAdapter {
                                 this.orderReady(order);
                             }
                         } else {
-                            logger.warn(`Empty message received. Ignoring. ${topic} - ${partition} - ${message}`);
+                            logger.warn(`Empty message received. Ignoring (possibly a duplicate order). ${topic} - ${partition} - ${message}`);
                         }
                     } else {
                         logger.warn(`Kithen Service Kafka Adapter - Kitchen service not ready, message being ignored : ${message}`);

@@ -34,25 +34,25 @@ const reset = function() {
             ];
     
     orders = [(new class implements Order {orderID = randomBytes(5).toString('hex'); customerName = "Real Hungrier Jack"; status = OrderStatus.Acknowledged; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }()),
-              (new class implements Order {orderID = randomBytes(3).toString('hex'); customerName = "Real Wrong Jack"; status = OrderStatus.Ready; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }()) 
+              (new class implements Order {orderID = randomBytes(8).toString('hex'); customerName = "Real Wrong Jack"; status = OrderStatus.Ready; customerAddress = "213 Hungryville 3026"; items = [items[0], items[1]] }()) 
             ];
 }
 
 describe('Kitchen Service Kafka Adapter Integration Tests', () => {
 
-    let processedOrder0: Order;
 
     it('Verify an Acknowledged Order is prepared', async () => {
+        let processedOrder: Order;
         reset();
         const telemetryRepo = await malabi(async() => {
             await setupProducerAndConsumer(config.get(`kitchenService.messaging.kafka.orders-topic`), 
                 async ({topic, partition, message}) => {
                     let msgValue = message.value?.toString();
-                    logger.info(`Integration test : message received - ${msgValue}`);
+                    logger.debug(`Integration test : message received - ${msgValue}`);
                     if(msgValue) {
                         let order = JSON.parse(msgValue);
                         if (order.status === OrderStatus.Ready && order.orderID === orders[0].orderID) {
-                            processedOrder0 = order;
+                            processedOrder = order;
                         } 
                     }
             });            
@@ -65,14 +65,14 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
                                 ]
             );            
             await resultReady(() => {
-                    if(processedOrder0)
+                    if(processedOrder)
                         return true;
                     else
                         return false;
                 }, 
                 config.get(`kitchenService.integration-test.result-check-timeout`), 
                 config.get(`kitchenService.integration-test.result-check-max-tries`));
-                logger.info(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder0)}`
+                logger.debug(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder)}`
             );            
             await tearDownProducerAndConsumer();   
         });
@@ -89,16 +89,19 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
             return span.mongoCollection; 
         });
 
-        //Verify that an ACK order was produced
+        //Verify 2 and only 2 messages were produced to the kafka orders topic - one for order ACK and one for order READY
         expect(kafkaPublishSpans.length === 2);
+
+        //Verify that an ACK order was produced
         const publishedOrder0 = JSON.parse(kafkaPublishSpans[0].messagingPayload);
         expect(publishedOrder0).to.be.not.null;
         expect(publishedOrder0.orderID).to.equal(orders[0].orderID);
         expect(publishedOrder0.status).to.equal(OrderStatus.Acknowledged);
 
         //Verify that a duplicate order search was performed using the correct Order ID and no duplicates were found in the DB search
-        expect(mongoSpans.length > 0);
+        expect(mongoSpans.length > 1);
         expect(mongoSpans[0].name).to.equal('mongoose.Order.findOne');
+        expect(mongoSpans[0].attribute('db.statement')).to.be.not.null;
         expect(JSON.parse(mongoSpans[0].attribute('db.statement').toString()).condition.orderID).to.equal(orders[0].orderID);
         expect(mongoSpans[0].attribute('db.response')).to.equal("null");
 
@@ -108,6 +111,88 @@ describe('Kitchen Service Kafka Adapter Integration Tests', () => {
         expect(publishedOrder1.orderID).to.equal(orders[0].orderID);
         expect(publishedOrder1.status).to.equal(OrderStatus.Ready);
     });
+
+    it('Verify a duplicate Order is ignored by the Kitchen service', async () => {
+        let processedOrder: Order | undefined;
+        let orderID: string;
+        reset();
+        const telemetryRepo = await malabi(async() => {
+
+            await setupProducerAndConsumer(config.get(`kitchenService.messaging.kafka.orders-topic`), 
+                async ({topic, partition, message}) => {
+                    let msgValue = message.value?.toString();
+                    logger.debug(`Integration test : message received - ${msgValue}`);
+                    if(msgValue) {
+                        let order = JSON.parse(msgValue);
+                        if (order.status === OrderStatus.Ready && order.orderID === orders[0].orderID) {
+                            processedOrder = order;
+                            orderID = order.orderID;
+                        } 
+                    }
+            });            
+            await sendMessage(config.get(`kitchenService.messaging.kafka.orders-topic`), 
+                                [
+                                    {
+                                        key: orders[0].orderID,
+                                        value: JSON.stringify(orders[0])
+                                    }
+                                ]
+            );            
+            await resultReady(() => {
+                    if(processedOrder)
+                        return true;
+                    else
+                        return false;
+                }, 
+                config.get(`kitchenService.integration-test.result-check-timeout`), 
+                config.get(`kitchenService.integration-test.result-check-max-tries`));
+                logger.debug(`Integration test : Results ready : Order under test = ${JSON.stringify(processedOrder)}`
+            );
+
+            //Duplicate order
+            await sendMessage(config.get(`kitchenService.messaging.kafka.orders-topic`), 
+                                [
+                                    {
+                                        key: orders[0].orderID,
+                                        value: JSON.stringify(orders[0])
+                                    }
+                                ]
+            );
+            await setTimeout(10000); //Giving some time for kafka and kitchen service to process
+            
+            await tearDownProducerAndConsumer();
+        });
+
+        const allSpans = telemetryRepo.spans.all;
+        const kafkaPublishSpans = allSpans.filter((span: MalabiSpan, index) => {
+            return (span.messagingSystem 
+                    && span.messagingSystem === 'kafka')
+                    && span.queueOrTopicName === 'orders' 
+                    && span.messagingDestinationKind === 'topic' 
+                    && span.kind === SpanKind.PRODUCER;
+        });
+        const mongoSpans = allSpans.filter((span: MalabiSpan, index) => {
+            return span.mongoCollection; 
+        });
+
+        //Verify 1 and only 1 message was produced to the kafka orders topic - for order ACK. No READY should have been produced
+        expect(kafkaPublishSpans.length === 1);
+
+        //Verify that an ACK order was produced
+        const publishedOrder0 = JSON.parse(kafkaPublishSpans[0].messagingPayload);
+        expect(publishedOrder0).to.be.not.null;
+        expect(publishedOrder0.orderID).to.equal(orders[0].orderID);
+        expect(publishedOrder0.status).to.equal(OrderStatus.Acknowledged);
+
+        //Verify that a duplicate order search was performed using the correct Order ID and duplicates were found in the DB search
+        expect(mongoSpans.length > 2);
+        expect(mongoSpans[2].name).to.equal('mongoose.Order.findOne');
+        expect(mongoSpans[2].attribute('db.statement')).to.be.not.null;
+        expect(JSON.parse(mongoSpans[2].attribute('db.statement').toString()).condition.orderID).to.equal(orders[0].orderID);
+        expect(mongoSpans[2].attribute('db.response')).to.not.equal("null");
+
+    });
+
 
     async function resultReady(predicate: (a:void) => boolean, timeout: number, maxTries: number) : Promise<boolean> {
         return new Promise(async (resolve, reject) => {
@@ -123,13 +208,13 @@ async function setupProducerAndConsumer(topic: string, consMsgRecvdCallback: Eac
     await producer.connect();
     await consumer.connect();
     await consumer.subscribe({topic: topic, fromBeginning: true});
-    logger.info(`Integration test : Subscribed to Orders Topic`);
+    logger.debug(`Integration test : Subscribed to Orders Topic`);
     await consumer.run({
         eachMessage: consMsgRecvdCallback,
     });
 
     while(!KitchenServiceKafkaAdapter.isInitialized()) {
-        logger.info("Waiting...");
+        logger.info("Waiting for Kitchen Service Kafka Adapter to initalize...");
         await setTimeout(config.get('kitchenService.integration-test.result-check-timeout'));   
     }
 }

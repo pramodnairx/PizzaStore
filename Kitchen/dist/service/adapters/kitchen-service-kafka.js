@@ -92,7 +92,7 @@ class KitchenServiceKafkaAdapter {
                                 }
                             }
                             else {
-                                utils_1.logger.warn(`Empty message received. Ignoring. ${topic} - ${partition} - ${message}`);
+                                utils_1.logger.warn(`Empty message received. Ignoring (possibly a duplicate order). ${topic} - ${partition} - ${message}`);
                             }
                         }
                         else {
