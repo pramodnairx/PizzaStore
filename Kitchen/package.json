@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf ./dist && mkdir ./dist",
     "test": "export NODE_ENV=test && mocha --timeout 60000 --recursive ./dist/test/*.js --exit",
-    "integration-test": "export NODE_ENV=integration-test && export MALABI_ENDPOINT_PORT_OR_URL=18393 && export MALABI_STORAGE_BACKEND=InMemory && export OTEL_EXPORTER_JAEGER_AGENT_HOST=jaeger && mocha --timeout 120000 --recursive ./dist/test/integration-test/*.js --require ./dist/test/integration-test/tracing.js --exit",
+    "integration-test": "export NODE_ENV=integration-test && mocha --timeout 120000 --recursive ./dist/test/integration-test/*.js --require ./dist/test/integration-test/tracing.js --exit",
     "build": "rm -rf ./dist && mkdir ./dist && npx tsc --build --clean && npx tsc",
     "start": "node dist/service/adapters/kitchen-service-kafka.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/service/kitchen-service-kafka.js\""

@@ -129,6 +129,5 @@ class KitchenServiceKafkaAdapter {
 exports.KitchenServiceKafkaAdapter = KitchenServiceKafkaAdapter;
 KitchenServiceKafkaAdapter.initialized = false;
 (0, malabi_1.instrument)(instrumentationConfig);
-(0, malabi_1.serveMalabiFromHttpApp)(18393 //config.get(`kitchenService.instrumentation.malabi-port`)
-, instrumentationConfig);
+(0, malabi_1.serveMalabiFromHttpApp)(config_1.default.get(`kitchenService.instrumentation.malabi-port`), instrumentationConfig);
 new KitchenServiceKafkaAdapter().init();

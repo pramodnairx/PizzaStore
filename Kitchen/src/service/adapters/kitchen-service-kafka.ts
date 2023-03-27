@@ -122,7 +122,7 @@ class KitchenServiceKafkaAdapter {
 }
 
 instrument(instrumentationConfig);
-serveMalabiFromHttpApp(18393 //config.get(`kitchenService.instrumentation.malabi-port`)
+serveMalabiFromHttpApp(config.get(`kitchenService.instrumentation.malabi-port`)
                         , instrumentationConfig);
 
 new KitchenServiceKafkaAdapter().init();
