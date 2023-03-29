@@ -18,5 +18,5 @@ Key focus areas -
 Our Pizza store acepts orders from the web. The store acknowledges the incoming order back to the user provided all ingredients are in stock. The store provides a status check service which can be polled to know when an order has been delivered.
 
 ## Behind the scenes
-![image](https://user-images.githubusercontent.com/470835/228421954-b9f8849e-dd3c-4a99-9ab9-f76e4da79e76.png)
+![image](https://user-images.githubusercontent.com/470835/228422282-419bf292-4ee2-45ef-a635-ae0fb00f147f.png)
  
