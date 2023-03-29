@@ -1,6 +1,6 @@
 # PizzaStore
 
-This is a demo application created to flesh out best practices and patterns in the development process, development and testing of event driven microservices.  
+This is a demo application created to flesh out best practices and patterns in the development process, development and testing of event driven microservices. <i>Work in progress.</i>  
 
 Key focus areas - 
 - Event driven microservices
