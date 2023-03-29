@@ -13,3 +13,10 @@ Key focus areas -
 ## How to run
 - docker compose up --remove-orphans --renew-anon-volumes (this will deploy and run the pizzastore app and trigger the integration tests under the Kitchen service)
 - To change the default behaviour of the above, update Kitchen/dockerfile -> CMD and select the appropriate script as defined in Kitchen/package.json
+
+## The plot
+Our Pizza store acepts orders from the web. The store acknowledges the incoming order back to the user provided all ingredients are in stock. The store provides a status check service which can be polled to know when an order has been delivered.
+
+## Behind the scenes
+![image](https://user-images.githubusercontent.com/470835/228421954-b9f8849e-dd3c-4a99-9ab9-f76e4da79e76.png)
+ 
