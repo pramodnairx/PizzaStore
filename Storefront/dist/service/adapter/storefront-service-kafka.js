@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.StoreFrontService = void 0;
+exports.StoreFrontServiceKafkaAdapter = void 0;
 const config_1 = __importDefault(require("config"));
 const utils_1 = require("../../util/utils");
 const kafkajs_1 = require("kafkajs");
-class StoreFront {
+class StoreFrontServiceKafkaAdapter {
     constructor() {
         this.kafka = new kafkajs_1.Kafka({
             clientId: config_1.default.get(`storefront.messaging.kafka.client-id`),
@@ -24,11 +24,11 @@ class StoreFront {
         });
     }
     static isInitialized() {
-        return StoreFront.initialized;
+        return StoreFrontServiceKafkaAdapter.initialized;
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!StoreFront.isInitialized()) {
+            if (!StoreFrontServiceKafkaAdapter.isInitialized()) {
                 utils_1.logger.info(`Pizza Store Front Service Kafka Adapter being initialized`);
                 const admin = this.kafka.admin();
                 let retries = 0;
@@ -62,7 +62,7 @@ class StoreFront {
                     utils_1.logger.info(`Store Front Service Kafka Adapter created topic ${config_1.default.get(`storefront.messaging.kafka.orders-topic`)}`);
                 }
                 yield admin.disconnect();
-                StoreFront.initialized = true;
+                StoreFrontServiceKafkaAdapter.initialized = true;
             }
             else {
                 utils_1.logger.warn(`Request to re-initialize Store Front Service Kafka Adapter. Ignored. Check code flow.`);
@@ -70,6 +70,6 @@ class StoreFront {
         });
     }
 }
-exports.StoreFrontService = StoreFront;
-StoreFront.initialized = false;
-new StoreFront().init();
+exports.StoreFrontServiceKafkaAdapter = StoreFrontServiceKafkaAdapter;
+StoreFrontServiceKafkaAdapter.initialized = false;
+new StoreFrontServiceKafkaAdapter().init();
