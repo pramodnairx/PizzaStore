@@ -1,11 +1,22 @@
 import config from 'config'; 
 import { logger } from '../../util/utils';
 import { Kafka, KafkaJSNonRetriableError } from 'kafkajs';
+import { iocContainer } from "../../inversify.config";
+import { StoreFrontService } from '../storefront-service';
+import { PersistenceManager, TYPES } from '../../db/persistencemanager';
+
+logger.defaultMeta = { service: `Storefront service Kafka adapter`};
+
+const instrumentationConfig = {
+    serviceName: 'storefront-service-kafka-adpeter',
+}
 
 class StoreFrontServiceKafkaAdapter {
 
     private static initialized = false;
     
+    private storeFront: StoreFrontService | undefined;
+
     private kafka = new Kafka({
         clientId: config.get(`storefront.messaging.kafka.client-id`),
         brokers: config.get(`storefront.messaging.kafka.brokers`)
@@ -38,8 +49,8 @@ class StoreFrontServiceKafkaAdapter {
                     }
                 }
             }
-
             logger.info(`Store Front Service Kafka Adapter - Kafka admin connected`);
+            
             if (!((await admin.listTopics()).includes(config.get(`storefront.messaging.kafka.orders-topic`)))) {
                 await admin.createTopics({
                     waitForLeaders: true,
@@ -49,8 +60,42 @@ class StoreFrontServiceKafkaAdapter {
                   });
                 logger.info(`Store Front Service Kafka Adapter created topic ${config.get(`storefront.messaging.kafka.orders-topic`)}`);
             }
+
             await admin.disconnect();
-    
+
+            /*
+            const pm = iocContainer.get<PersistenceManager>(TYPES.PersistenceManager);
+            this.storeFront = new StoreFrontService(pm);
+            logger.info(`Store Front Service Kafka Adapter - DB initialized`);
+
+            let consumer = this.kafka.consumer({groupId: 
+                            `${config.get("storefront.messaging.kafka.group-id")}`});
+            //this.setupForCleanShutdown(consumer);
+            await consumer.connect();
+            await consumer.subscribe({topic: `${config.get(`storefront.messaging.kafka.orders-topic`)}`, fromBeginning: true});
+
+            logger.info(`Store Front Service Kafka Adapter subscribed to topic`);
+            
+            await consumer.run({
+                eachMessage: async ({topic, partition, message}) => {
+                    if (this.storeFront) {
+                        let msgValue = message.value?.toString();
+                        logger.info(`Store Front Service Kafka Adapter processing incoming ${msgValue}`);
+                        if(msgValue) {
+                            let order = await this.storeFront.processOrder(JSON.parse(msgValue));
+                            if(order && order !== null) {
+                                this.orderReady(order);
+                            }
+                        } else {
+                            logger.warn(`Empty message received. Ignoring (possibly a duplicate order). ${topic} - ${partition} - ${message}`);
+                        }
+                    } else {
+                        logger.warn(`Store Front Service Kafka Adapter - Kitchen service not ready, message being ignored : ${message}`);
+                    }
+                }
+            });
+            */
+
             StoreFrontServiceKafkaAdapter.initialized = true;
 
         } else {

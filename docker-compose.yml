@@ -2,7 +2,7 @@ version: '2'
 
 services:
   kitchen-service:
-    image: kitchen:latest
+    build: ./Kitchen
     depends_on:
       - storefront
       - mongodb_container
@@ -13,7 +13,7 @@ services:
       - MALABI_ENDPOINT_PORT_OR_URL=18393
 
   storefront:
-    image: storefront:latest
+    build: ./Storefront
     depends_on:
       - kafka
       - mongodb_container

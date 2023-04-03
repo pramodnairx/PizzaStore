@@ -72,7 +72,7 @@ describe('Store Front Service Tests', () => {
         expect(order!.orderID).equals(orders[0].orderID);
     });
 
-    it('Initiate an invalid order (status = Ready) and verify it is discarded', async () => {
+    it('Initiate an already Ready order and verify it is discarded', async () => {
         reset();
         if(mockPM instanceof MockPersistenceManager) {
             mockPM.setMockResponses([
